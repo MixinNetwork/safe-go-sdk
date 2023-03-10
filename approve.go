@@ -13,8 +13,14 @@ import (
 
 func ApproveSafeAccount(address, priv string) (string, error) {
 	var buf bytes.Buffer
-	_ = wire.WriteVarString(&buf, 0, "Bitcoin Signed Message:\n")
-	_ = wire.WriteVarString(&buf, 0, address)
+	err := wire.WriteVarString(&buf, 0, "Bitcoin Signed Message:\n")
+	if err != nil {
+		return "", err
+	}
+	err = wire.WriteVarString(&buf, 0, address)
+	if err != nil {
+		return "", err
+	}
 	hash := chainhash.DoubleHashB(buf.Bytes())
 	b, err := hex.DecodeString(priv)
 	if err != nil {
