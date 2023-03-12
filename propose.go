@@ -12,7 +12,7 @@ const (
 	BitcoinAssetId = "c6d0c728-2624-429b-8e0d-d9d19b6592fa"
 )
 
-func ProposeAccount(operationId, publicKey string, owners []string) (string, string, error) {
+func ProposeAccount(operationId, publicKey string, owners []string, threshold byte) (string, string, error) {
 	op := &Operation{
 		Id:     operationId,
 		Type:   110,
@@ -20,12 +20,15 @@ func ProposeAccount(operationId, publicKey string, owners []string) (string, str
 		Public: publicKey,
 	}
 
-	threshold := byte(1)
-	total := byte(1)
+	total := byte(len(owners))
 	extra := []byte{threshold, total}
-	// TODO support multi
-	uid := uuid.FromStringOrNil(owners[0])
-	op.Extra = append(extra, uid.Bytes()...)
+	for _, o := range owners {
+		uid, err := uuid.FromString(o)
+		if err != nil {
+			panic(err)
+		}
+		op.Extra = append(extra, uid.Bytes()...)
+	}
 
 	memo := base64.RawURLEncoding.EncodeToString(op.Encode())
 	return op.Id, memo, nil
