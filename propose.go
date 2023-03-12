@@ -1,8 +1,6 @@
 package safe
 
 import (
-	"encoding/base64"
-
 	"github.com/fox-one/mixin-sdk-go"
 	"github.com/gofrs/uuid"
 	"github.com/shopspring/decimal"
@@ -12,8 +10,8 @@ const (
 	BitcoinAssetId = "c6d0c728-2624-429b-8e0d-d9d19b6592fa"
 )
 
-func ProposeAccount(operationId, publicKey string, owners []string, threshold byte) (string, string, error) {
-	op := &Operation{
+func ProposeAccount(operationId, publicKey string, owners []string, threshold byte) *Operation {
+	op := Operation{
 		Id:     operationId,
 		Type:   110,
 		Curve:  1,
@@ -30,8 +28,7 @@ func ProposeAccount(operationId, publicKey string, owners []string, threshold by
 		op.Extra = append(extra, uid.Bytes()...)
 	}
 
-	memo := base64.RawURLEncoding.EncodeToString(op.Encode())
-	return op.Id, memo, nil
+	return &op
 }
 
 func BuildTransfer(operationId, memo string) *mixin.TransferInput {

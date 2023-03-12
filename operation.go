@@ -1,6 +1,7 @@
 package safe
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 
 	"github.com/MixinNetwork/mixin/common"
@@ -48,6 +49,10 @@ func (o *Operation) Encode() []byte {
 	writeBytes(enc, pub)
 	writeBytes(enc, o.Extra)
 	return enc.Bytes()
+}
+
+func (o *Operation) EncodeBase64() string {
+	return base64.RawURLEncoding.EncodeToString(o.Encode())
 }
 
 func DecodeOperation(b []byte) (*Operation, error) {
