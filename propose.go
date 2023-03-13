@@ -42,10 +42,14 @@ func ProposeTransaction(operationId, publicKey string, destination string) *Oper
 	return op
 }
 
-func BuildTransfer(operationId, memo string) *mixin.TransferInput {
+func BuildTransfer(assetId, amount, operationId, memo string) (*mixin.TransferInput, error) {
+	a, err := decimal.NewFromString(amount)
+	if err != nil {
+		return nil, err
+	}
 	input := &mixin.TransferInput{
-		AssetID: PusdAssetId,
-		Amount:  decimal.NewFromFloat(1),
+		AssetID: assetId,
+		Amount:  a,
 		TraceID: operationId,
 		Memo:    memo,
 	}
@@ -57,5 +61,5 @@ func BuildTransfer(operationId, memo string) *mixin.TransferInput {
 		"fcb87491-4fa0-4c2f-b387-262b63cbc112",
 	}
 	input.OpponentMultisig.Threshold = 4
-	return input
+	return input, nil
 }
