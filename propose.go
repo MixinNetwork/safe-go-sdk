@@ -8,6 +8,7 @@ import (
 
 const (
 	BitcoinAssetId = "c6d0c728-2624-429b-8e0d-d9d19b6592fa"
+	PusdAssetId    = "31d2ea9c-95eb-3355-b65b-ba096853bc18"
 )
 
 func ProposeAccount(operationId, publicKey string, owners []string, threshold byte) *Operation {
@@ -33,8 +34,8 @@ func ProposeAccount(operationId, publicKey string, owners []string, threshold by
 
 func BuildTransfer(operationId, memo string) *mixin.TransferInput {
 	input := &mixin.TransferInput{
-		AssetID: BitcoinAssetId,
-		Amount:  decimal.NewFromFloat(0.0001),
+		AssetID: PusdAssetId,
+		Amount:  decimal.NewFromFloat(1),
 		TraceID: operationId,
 		Memo:    memo,
 	}
