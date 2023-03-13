@@ -28,8 +28,18 @@ func ProposeAccount(operationId, publicKey string, owners []string, threshold by
 		}
 		op.Extra = append(extra, uid.Bytes()...)
 	}
-
 	return &op
+}
+
+func ProposeTransaction(operationId, publicKey string, destination string) *Operation {
+	op := &Operation{
+		Id:     operationId,
+		Type:   112,
+		Curve:  1,
+		Public: publicKey,
+		Extra:  []byte(destination),
+	}
+	return op
 }
 
 func BuildTransfer(operationId, memo string) *mixin.TransferInput {
