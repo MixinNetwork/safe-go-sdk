@@ -7,8 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 var (
@@ -34,7 +32,7 @@ func Request(ctx context.Context, method, path string, body []byte) ([]byte, err
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 500 {
-		return nil, errors.Wrap(fmt.Sprintf("response status code %d", resp.StatusCode))
+		return nil, fmt.Errorf("response status code %d", resp.StatusCode)
 	}
 	return ioutil.ReadAll(resp.Body)
 }
