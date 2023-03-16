@@ -31,13 +31,15 @@ func ProposeAccount(operationId, publicKey string, owners []string, threshold by
 	return &op
 }
 
-func ProposeTransaction(operationId, publicKey string, destination string) *Operation {
+func ProposeTransaction(operationId, publicKey string, head, destination string) *Operation {
+	extra := uuid.FromStringOrNil(head).Bytes()
+	extra = append(extra, []byte(destination)...)
 	op := &Operation{
 		Id:     operationId,
 		Type:   112,
 		Curve:  1,
 		Public: publicKey,
-		Extra:  []byte(destination),
+		Extra:  extra,
 	}
 	return op
 }
