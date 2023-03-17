@@ -31,6 +31,14 @@ func (o *Operation) IdBytes() []byte {
 	return uid.Bytes()
 }
 
+func DecodeHex(s string) []byte {
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		panic(s)
+	}
+	return b
+}
+
 type Operation struct {
 	Id     string
 	Type   uint8
