@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/MixinNetwork/mixin v0.14.20
+	github.com/MixinNetwork/trusted-group v0.4.2
 	github.com/btcsuite/btcd v0.23.4
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/btcsuite/btcd/btcutil/psbt v1.1.7

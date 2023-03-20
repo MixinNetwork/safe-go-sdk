@@ -6,6 +6,8 @@ github.com/MixinNetwork/mixin v0.14.20 h1:9917D7LYazt4RjxOIHwwBHIyA+vMrwAI9OSvgj
 github.com/MixinNetwork/mixin v0.14.20/go.mod h1:WdSGoWlDnkvNGBI2LarTe42ZaeNcx1xF6AG/FzUV66Q=
 github.com/MixinNetwork/mobilecoin-account v0.0.2 h1:2Ib8UQft6KySAFhGU5kjQNOvVIENlH6QXgW6uC+od0I=
 github.com/MixinNetwork/mobilecoin-account v0.0.2/go.mod h1:53/Dnb+RQttRjnSEK0RKD28A1326P8lpw8Ydl50lk1g=
+github.com/MixinNetwork/trusted-group v0.4.2 h1:TAzsTg1POUjKBHtkhFdgiHsHGwgrkAqJ8Q35VCaBiv8=
+github.com/MixinNetwork/trusted-group v0.4.2/go.mod h1:24DZdaLHpPAtGYR7u3NdSdAbGYEOJtroQJQW+8CgyZs=
 github.com/aead/siphash v1.0.1/go.mod h1:Nywa3cDsYNNK3gaciGTWPwHt0wlpNV15vwmswBAUSII=
 github.com/btcsuite/btcd v0.20.1-beta/go.mod h1:wVuoA8VJLEcwgqHBwHmzLRazpKxTv13Px/pDuV7OomQ=
 github.com/btcsuite/btcd v0.22.0-beta.0.20220111032746-97732e52810c/go.mod h1:tjmYdS6MLJ5/s0Fj4DbLgSbDHbEqLJrtnHecBFkdz5M=
