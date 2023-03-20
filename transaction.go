@@ -167,6 +167,9 @@ func ReadTransaction(ctx context.Context, id string) (*Transaction, error) {
 		}
 		return nil, fmt.Errorf("ReadTransaction error %v", body.Error)
 	}
+	if body.ID == "" {
+		return nil, nil
+	}
 	return &body, nil
 }
 
