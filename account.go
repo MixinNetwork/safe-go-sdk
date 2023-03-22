@@ -6,13 +6,26 @@ import (
 	"fmt"
 )
 
+type Output struct {
+	TransactionHash string `json:"transaction_hash"`
+	Satoshi         int64  `json:"satoshi"`
+	OutputIndex     int64  `json:"output_index"`
+}
+
+type Accountant struct {
+	Address string    `json:"address"`
+	Outputs []*Output `json:"outputs"`
+}
+
 type Account struct {
-	ID         string `json:"id"`
-	Accountant string `json:"accountant"`
-	Address    string `json:"address"`
-	Script     string `json:"script"`
-	Status     string `json:"status"`
-	Error      any    `json:"error,omitempty"`
+	ID         string      `json:"id"`
+	Accountant *Accountant `json:"accountant"`
+	Address    string      `json:"address"`
+	Chain      int64       `json:"chain"`
+	Outputs    []*Output   `json:"outputs"`
+	Script     string      `json:"script"`
+	Status     string      `json:"status"`
+	Error      any         `json:"error,omitempty"`
 }
 
 func ReadAccount(ctx context.Context, id string) (*Account, error) {
