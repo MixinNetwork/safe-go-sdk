@@ -9,7 +9,7 @@ import (
 type Output struct {
 	TransactionHash string `json:"transaction_hash"`
 	Satoshi         int64  `json:"satoshi"`
-	OutputIndex     int64  `json:"output_index"`
+	OutputIndex     uint32 `json:"output_index"`
 }
 
 type Accountant struct {

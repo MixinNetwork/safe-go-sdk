@@ -175,12 +175,12 @@ func ReadTransaction(ctx context.Context, id string) (*Transaction, error) {
 
 type transactionRequest struct {
 	Action    string `json:"action"`
-	Chain     int    `json:"chain"`
+	Chain     int64  `json:"chain"`
 	Raw       string `json:"raw"`
 	Signature string `json:"signature"`
 }
 
-func ApproveTransaction(ctx context.Context, id string, chain int, raw, signature string) (*Transaction, error) {
+func ApproveTransaction(ctx context.Context, id string, chain int64, raw, signature string) (*Transaction, error) {
 	req := transactionRequest{
 		Action:    "approve",
 		Chain:     chain,
