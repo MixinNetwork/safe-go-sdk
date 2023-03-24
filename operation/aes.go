@@ -1,4 +1,4 @@
-package safe
+package operation
 
 import (
 	"crypto/aes"

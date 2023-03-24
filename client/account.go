@@ -1,4 +1,4 @@
-package inquiries
+package client
 
 import (
 	"context"

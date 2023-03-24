@@ -1,6 +1,7 @@
-package safe
+package operation
 
 import (
+	"github.com/MixinNetwork/go-safe-sdk/types"
 	"github.com/fox-one/mixin-sdk-go"
 	"github.com/gofrs/uuid"
 	"github.com/shopspring/decimal"
@@ -11,8 +12,8 @@ const (
 	PusdAssetId    = "31d2ea9c-95eb-3355-b65b-ba096853bc18"
 )
 
-func ProposeAccount(operationId, publicKey string, owners []string, threshold byte) *Operation {
-	op := Operation{
+func ProposeAccount(operationId, publicKey string, owners []string, threshold byte) *types.Operation {
+	op := types.Operation{
 		Id:     operationId,
 		Type:   110,
 		Curve:  1,
@@ -31,10 +32,10 @@ func ProposeAccount(operationId, publicKey string, owners []string, threshold by
 	return &op
 }
 
-func ProposeTransaction(operationId, publicKey string, head, destination string) *Operation {
+func ProposeTransaction(operationId, publicKey string, head, destination string) *types.Operation {
 	extra := uuid.FromStringOrNil(head).Bytes()
 	extra = append(extra, []byte(destination)...)
-	op := &Operation{
+	op := &types.Operation{
 		Id:     operationId,
 		Type:   112,
 		Curve:  1,

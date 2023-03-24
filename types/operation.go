@@ -1,4 +1,4 @@
-package safe
+package types
 
 import (
 	"encoding/base64"
@@ -23,22 +23,6 @@ const (
 	CurveEdwards25519Mixin       = 12
 )
 
-func (o *Operation) IdBytes() []byte {
-	uid, err := uuid.FromString(o.Id)
-	if err != nil {
-		panic(err)
-	}
-	return uid.Bytes()
-}
-
-func DecodeHex(s string) []byte {
-	b, err := hex.DecodeString(s)
-	if err != nil {
-		panic(s)
-	}
-	return b
-}
-
 type Operation struct {
 	Id     string
 	Type   uint8
@@ -61,6 +45,14 @@ func (o *Operation) Encode() []byte {
 
 func (o *Operation) EncodeBase64() string {
 	return base64.RawURLEncoding.EncodeToString(o.Encode())
+}
+
+func (o *Operation) IdBytes() []byte {
+	uid, err := uuid.FromString(o.Id)
+	if err != nil {
+		panic(err)
+	}
+	return uid.Bytes()
 }
 
 func DecodeOperation(b []byte) (*Operation, error) {
@@ -139,4 +131,12 @@ func readUUID(dec *common.Decoder) (string, error) {
 	}
 	id, err := uuid.FromBytes(b[:])
 	return id.String(), err
+}
+
+func DecodeHex(s string) []byte {
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		panic(s)
+	}
+	return b
 }

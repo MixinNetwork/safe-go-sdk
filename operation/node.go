@@ -1,10 +1,11 @@
-package safe
+package operation
 
 import (
 	"encoding/hex"
 	"fmt"
 	"unicode/utf8"
 
+	"github.com/MixinNetwork/go-safe-sdk/types"
 	"github.com/MixinNetwork/trusted-group/mtg"
 	"github.com/gofrs/uuid"
 )
@@ -28,7 +29,7 @@ func DecodeMixinExtra(b []byte) *MixinExtraPack {
 	return &p
 }
 
-func DecodeExtra(aesKey []byte, memo string) (*Operation, error) {
+func DecodeExtra(aesKey []byte, memo string) (*types.Operation, error) {
 	memoBuf, err := hex.DecodeString(memo)
 	if err != nil {
 		return nil, err
@@ -39,5 +40,5 @@ func DecodeExtra(aesKey []byte, memo string) (*Operation, error) {
 		return nil, fmt.Errorf("empty memo")
 	}
 	b := AESDecrypt(aesKey, []byte(msp.M))
-	return DecodeOperation(b)
+	return types.DecodeOperation(b)
 }
