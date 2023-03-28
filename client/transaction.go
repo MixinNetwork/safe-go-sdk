@@ -75,3 +75,26 @@ func ApproveTransaction(ctx context.Context, id string, chain int64, raw, signat
 	}
 	return &body, nil
 }
+
+func RevokeTransaction(ctx context.Context, id, hash, signature string) error {
+	req := map[string]string{"hash": hash, "signature": signature, "action": "revoke"}
+	reqBuf, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+	data, err := Request(ctx, "POST", fmt.Sprintf("/transactions/%s", id), reqBuf)
+	if err != nil {
+		return err
+	}
+
+	var body Transaction
+	err = json.Unmarshal(data, &body)
+	if err != nil {
+		return err
+	}
+
+	if body.Error != nil {
+		return fmt.Errorf("revoke %s error %v", id, body.Error)
+	}
+	return nil
+}
