@@ -70,7 +70,7 @@ func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*
 	estvb := (40 + len(msgTx.TxIn)*300 + (len(msgTx.TxOut)+1)*128) / 4
 	feeConsumed := fvb * int64(estvb)
 	if feeConsumed > feeSatoshi {
-		return fmt.Errorf("insufficient %s %d %d", "fee", mainSatoshi, outputSatoshi)
+		return fmt.Errorf("insufficient %s %d %d", "fee", feeConsumed, feeSatoshi)
 	}
 	return nil
 }
