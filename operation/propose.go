@@ -27,8 +27,9 @@ func ProposeAccount(operationId, publicKey string, owners []string, threshold by
 		if err != nil {
 			panic(err)
 		}
-		op.Extra = append(extra, uid.Bytes()...)
+		extra = append(extra, uid.Bytes()...)
 	}
+	op.Extra = extra
 	return &op
 }
 
