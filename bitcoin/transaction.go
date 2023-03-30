@@ -37,7 +37,7 @@ type Output struct {
 	Coinbase bool
 }
 
-func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*Output, fvb int64) error {
+func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*Output, fvb int64, rid []byte) error {
 	msgTx := wire.NewMsgTx(2)
 
 	mainAddress, mainSatoshi, err := addInputs(msgTx, mainInputs)
@@ -68,6 +68,9 @@ func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*
 	}
 
 	estvb := (40 + len(msgTx.TxIn)*300 + (len(msgTx.TxOut)+1)*128) / 4
+	if len(rid) > 0 && len(rid) <= 64 {
+		estvb += len(rid)
+	}
 	feeConsumed := fvb * int64(estvb)
 	if feeConsumed > feeSatoshi {
 		return fmt.Errorf("insufficient %s %d %d", "fee", feeConsumed, feeSatoshi)
