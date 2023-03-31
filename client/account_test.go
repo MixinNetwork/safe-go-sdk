@@ -2,8 +2,10 @@ package client
 
 import (
 	"context"
+	"log"
 	"testing"
 
+	"github.com/MixinNetwork/go-number"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,4 +19,14 @@ func TestAccountRPC(t *testing.T) {
 	assert.Len(account.Accountant.Outputs, 1)
 	assert.Len(account.Outputs, 1)
 	assert.Equal(int64(1), account.Chain)
+
+	account, err = ReadAccount(ctx, "ec6e0eb3-3f2d-4220-a6c2-612aaba51995")
+	var feeTotal int64 = 0
+	for _, output := range account.Accountant.Outputs {
+		log.Println(output.Satoshi)
+		feeTotal += output.Satoshi
+	}
+	log.Println(feeTotal)
+	fee := number.NewDecimal(feeTotal, 8)
+	log.Println(fee.Cmp(number.FromString("0.001")))
 }
