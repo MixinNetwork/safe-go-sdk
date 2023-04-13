@@ -3,10 +3,12 @@ module github.com/MixinNetwork/go-safe-sdk
 go 1.20
 
 require (
+	github.com/MixinNetwork/go-number v0.1.0
 	github.com/MixinNetwork/mixin v0.14.20
 	github.com/MixinNetwork/trusted-group v0.4.2
 	github.com/btcsuite/btcd v0.23.4
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
+	github.com/btcsuite/btcd/btcutil v1.1.0
 	github.com/btcsuite/btcd/btcutil/psbt v1.1.7
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
 	github.com/ethereum/go-ethereum v1.11.4
@@ -18,9 +20,7 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.0.0 // indirect
-	github.com/MixinNetwork/go-number v0.1.0 // indirect
 	github.com/MixinNetwork/mobilecoin-account v0.0.2 // indirect
-	github.com/btcsuite/btcd/btcutil v1.1.0 // indirect
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/bwesterb/go-ristretto v1.2.2 // indirect
