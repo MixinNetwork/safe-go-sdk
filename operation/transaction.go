@@ -16,7 +16,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-func SignTx(rawStr, privateStr string) (string, error) {
+func SignSafeTx(rawStr, privateStr string) (string, error) {
 	rawb, _ := hex.DecodeString(rawStr)
 	hpsbt, err := UnmarshalPartiallySignedTransaction(rawb)
 	if err != nil {
