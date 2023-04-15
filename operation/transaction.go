@@ -18,7 +18,7 @@ import (
 
 func SignSafeTx(rawStr, privateStr string) (string, error) {
 	rawb, _ := hex.DecodeString(rawStr)
-	hpsbt, err := UnmarshalPartiallySignedTransaction(rawb)
+	hpsbt, err := UnmarshalPartiallySignedTransaction(rawb, false)
 	if err != nil {
 		return "", err
 	}
@@ -42,15 +42,17 @@ func SignSafeTx(rawStr, privateStr string) (string, error) {
 	fmt.Printf("psbt: %x\n", raw)
 
 	msg := HashMessageForSignature(msgTx.TxHash().String())
-	sig := ecdsa.Sign(holder, msg).Serialize()
-	fmt.Printf("signature: %s\n", base64.RawURLEncoding.EncodeToString(sig))
-	return base64.RawURLEncoding.EncodeToString(sig), nil
+	sig := base64.RawURLEncoding.EncodeToString(ecdsa.Sign(holder, msg).Serialize())
+	fmt.Printf("signature: %s\n", (sig))
+	hpsbt.Signature = sig
+	return hex.EncodeToString(hpsbt.Marshal()), nil
 }
 
 type PartiallySignedTransaction struct {
-	Hash   string
-	Fee    int64
-	Packet *psbt.Packet
+	Hash      string
+	Fee       int64
+	Packet    *psbt.Packet
+	Signature string
 }
 
 func (raw *PartiallySignedTransaction) Marshal() []byte {
@@ -58,6 +60,13 @@ func (raw *PartiallySignedTransaction) Marshal() []byte {
 	hash, err := hex.DecodeString(raw.Hash)
 	if err != nil || len(hash) != 32 {
 		panic(raw.Hash)
+	}
+	sig, err := base64.RawURLEncoding.DecodeString(raw.Signature)
+	if err != nil {
+		panic(raw.Signature)
+	}
+	if len(sig) != 0 && len(sig) != 70 {
+		panic(raw.Signature)
 	}
 
 	var rawBuffer bytes.Buffer
@@ -70,14 +79,16 @@ func (raw *PartiallySignedTransaction) Marshal() []byte {
 	if err != nil {
 		panic(err)
 	}
-
 	raw.writeBytes(enc, hash)
 	raw.writeBytes(enc, rb)
+	if len(sig) > 0 {
+		raw.writeBytes(enc, sig)
+	}
 	enc.WriteUint64(uint64(raw.Fee))
 	return enc.Bytes()
 }
 
-func UnmarshalPartiallySignedTransaction(b []byte) (*PartiallySignedTransaction, error) {
+func UnmarshalPartiallySignedTransaction(b []byte, haveSig bool) (*PartiallySignedTransaction, error) {
 	dec := common.NewDecoder(b)
 	hash, err := dec.ReadBytes()
 	if err != nil {
@@ -87,6 +98,14 @@ func UnmarshalPartiallySignedTransaction(b []byte) (*PartiallySignedTransaction,
 	if err != nil {
 		return nil, err
 	}
+	sig := []byte{}
+	if haveSig {
+		sig, err = dec.ReadBytes()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	fee, err := dec.ReadUint64()
 	if err != nil {
 		return nil, err
@@ -105,11 +124,15 @@ func UnmarshalPartiallySignedTransaction(b []byte) (*PartiallySignedTransaction,
 	if hex.EncodeToString(hash) != pkt.UnsignedTx.TxHash().String() {
 		return nil, fmt.Errorf("hash %x %s", hash, pkt.UnsignedTx.TxHash().String())
 	}
-	return &PartiallySignedTransaction{
+	pst := &PartiallySignedTransaction{
 		Hash:   hex.EncodeToString(hash),
 		Fee:    int64(fee),
 		Packet: pkt,
-	}, nil
+	}
+	if haveSig {
+		pst.Signature = base64.RawURLEncoding.EncodeToString(sig)
+	}
+	return pst, nil
 }
 
 func (t *PartiallySignedTransaction) SigHash(idx int) []byte {
