@@ -16,15 +16,15 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-func SignSafeTx(rawStr, privateStr string) (string, error) {
+func SignSafeTx(rawStr, privateStr string) (string, string, error) {
 	rawb, _ := hex.DecodeString(rawStr)
 	hpsbt, err := UnmarshalPartiallySignedTransaction(rawb)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	seed, err := hex.DecodeString(privateStr)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	holder, _ := btcec.PrivKeyFromBytes(seed)
 
@@ -39,12 +39,10 @@ func SignSafeTx(rawStr, privateStr string) (string, error) {
 		}}
 	}
 	raw := hpsbt.Marshal()
-	fmt.Printf("psbt: %x\n", raw)
 
 	msg := HashMessageForSignature(msgTx.TxHash().String())
 	sig := ecdsa.Sign(holder, msg).Serialize()
-	fmt.Printf("signature: %s\n", base64.RawURLEncoding.EncodeToString(sig))
-	return base64.RawURLEncoding.EncodeToString(sig), nil
+	return hex.EncodeToString(raw), base64.RawURLEncoding.EncodeToString(sig), nil
 }
 
 type PartiallySignedTransaction struct {
