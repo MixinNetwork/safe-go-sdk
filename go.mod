@@ -8,8 +8,8 @@ require (
 	github.com/MixinNetwork/trusted-group v0.4.2
 	github.com/btcsuite/btcd v0.23.4
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
-	github.com/btcsuite/btcd/btcutil v1.1.0
-	github.com/btcsuite/btcd/btcutil/psbt v1.1.7
+	github.com/btcsuite/btcd/btcutil v1.1.3
+	github.com/btcsuite/btcd/btcutil/psbt v1.1.8
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
 	github.com/ethereum/go-ethereum v1.11.4
 	github.com/fox-one/mixin-sdk-go v1.7.3
