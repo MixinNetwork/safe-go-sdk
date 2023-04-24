@@ -3,13 +3,15 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"time"
 )
 
 type Head struct {
-	Fee    int64  `json:"fee"`
-	Hash   string `json:"hash"`
-	Height int64  `json:"height"`
-	ID     string `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	Fee       int64     `json:"fee"`
+	Hash      string    `json:"hash"`
+	Height    int64     `json:"height"`
+	ID        string    `json:"id"`
 }
 
 type Chain struct {
