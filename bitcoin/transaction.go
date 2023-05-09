@@ -37,33 +37,33 @@ type Output struct {
 	Coinbase bool
 }
 
-func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*Output, fvb int64, rid []byte) error {
+func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*Output, fvb int64, rid []byte) (int64, error) {
 	msgTx := wire.NewMsgTx(2)
 
 	mainAddress, mainSatoshi, err := addInputs(msgTx, mainInputs)
 	if err != nil {
-		return fmt.Errorf("addInputs(main) => %v", err)
+		return 0, fmt.Errorf("addInputs(main) => %v", err)
 	}
 	_, feeSatoshi, err := addInputs(msgTx, feeInputs)
 	if err != nil {
-		return fmt.Errorf("addInputs(fee) => %v", err)
+		return 0, fmt.Errorf("addInputs(fee) => %v", err)
 	}
 
 	var outputSatoshi int64
 	for _, out := range outputs {
 		err := addOutput(msgTx, out.Address, out.Satoshi)
 		if err != nil {
-			return fmt.Errorf("addOutput(%s, %d) => %v", out.Address, out.Satoshi, err)
+			return 0, fmt.Errorf("addOutput(%s, %d) => %v", out.Address, out.Satoshi, err)
 		}
 		outputSatoshi = outputSatoshi + out.Satoshi
 	}
 	if outputSatoshi > mainSatoshi {
-		return fmt.Errorf("insufficient %s %d %d", "main", mainSatoshi, outputSatoshi)
+		return 0, fmt.Errorf("insufficient %s %d %d", "main", mainSatoshi, outputSatoshi)
 	}
 	if change := mainSatoshi - outputSatoshi; change > 0 {
 		err := addOutput(msgTx, mainAddress, change)
 		if err != nil {
-			return fmt.Errorf("addOutput(%s, %d) => %v", mainAddress, change, err)
+			return 0, fmt.Errorf("addOutput(%s, %d) => %v", mainAddress, change, err)
 		}
 	}
 
@@ -73,9 +73,9 @@ func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*
 	}
 	feeConsumed := fvb * int64(estvb)
 	if feeConsumed > feeSatoshi {
-		return fmt.Errorf("insufficient %s %d %d", "fee", feeConsumed, feeSatoshi)
+		return feeConsumed - feeSatoshi, fmt.Errorf("insufficient %s %d %d", "fee", feeConsumed, feeSatoshi)
 	}
-	return nil
+	return 0, nil
 }
 
 func addInputs(tx *wire.MsgTx, inputs []*Input) (string, int64, error) {
