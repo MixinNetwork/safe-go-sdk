@@ -10,13 +10,16 @@ import (
 const (
 	BitcoinAssetId = "c6d0c728-2624-429b-8e0d-d9d19b6592fa"
 	PusdAssetId    = "31d2ea9c-95eb-3355-b65b-ba096853bc18"
+
+	CurveBitcoin = 1
+	CurveLitcoin = 100
 )
 
-func ProposeAccount(operationId, publicKey string, owners []string, threshold byte) *types.Operation {
+func ProposeAccount(operationId, publicKey string, owners []string, threshold byte, curve uint8) *types.Operation {
 	op := types.Operation{
 		Id:     operationId,
 		Type:   110,
-		Curve:  1,
+		Curve:  curve,
 		Public: publicKey,
 	}
 
@@ -33,13 +36,13 @@ func ProposeAccount(operationId, publicKey string, owners []string, threshold by
 	return &op
 }
 
-func ProposeTransaction(operationId, publicKey string, head, destination string) *types.Operation {
+func ProposeTransaction(operationId, publicKey string, head, destination string, curve uint8) *types.Operation {
 	extra := uuid.FromStringOrNil(head).Bytes()
 	extra = append(extra, []byte(destination)...)
 	op := &types.Operation{
 		Id:     operationId,
 		Type:   112,
-		Curve:  1,
+		Curve:  curve,
 		Public: publicKey,
 		Extra:  extra,
 	}
