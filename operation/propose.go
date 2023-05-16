@@ -12,7 +12,7 @@ const (
 	PusdAssetId    = "31d2ea9c-95eb-3355-b65b-ba096853bc18"
 
 	CurveBitcoin = 1
-	CurveLitcoin = 100
+	CurveLitcoin = 101
 )
 
 func ProposeAccount(operationId, publicKey string, owners []string, threshold byte, curve uint8) *types.Operation {
