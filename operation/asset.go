@@ -110,12 +110,12 @@ func fetchAssetId(mixinId string) string {
 func GetSafeBTCAssetId(chainId, holder string) (string, error) {
 	switch chainId {
 	case SafeBitcoinChainId:
-		addr := GetFactoryAssetAddress(SafeBitcoinChainId, "BTC", "Bitcoin", holder)
+		addr := GetFactoryAssetAddress(chainId, "BTC", "Bitcoin", holder)
 		assetKey := strings.ToLower(addr.String())
 		bondId := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
 		return bondId, nil
 	case SafeLitecoinChainId:
-		addr := GetFactoryAssetAddress(SafeBitcoinChainId, "LTC", "Litecoin", holder)
+		addr := GetFactoryAssetAddress(chainId, "LTC", "Litecoin", holder)
 		assetKey := strings.ToLower(addr.String())
 		bondId := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
 		return bondId, nil
