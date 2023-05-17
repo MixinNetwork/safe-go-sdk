@@ -24,6 +24,7 @@ const (
 	ethereumChainId        = 73927
 
 	SafeChainBitcoin  = 1
+	SafeChainLitecoin = 5
 	SafeChainEthereum = 2
 	SafeChainMixin    = 3
 	SafeChainMVM      = 4

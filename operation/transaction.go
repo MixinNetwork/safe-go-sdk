@@ -16,7 +16,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-func SignSafeTx(rawStr, privateStr string) (string, string, error) {
+func SignSafeTx(rawStr, privateStr string, chain byte) (string, string, error) {
 	rawb, _ := hex.DecodeString(rawStr)
 	hpsbt, err := UnmarshalPartiallySignedTransaction(rawb)
 	if err != nil {
@@ -40,7 +40,7 @@ func SignSafeTx(rawStr, privateStr string) (string, string, error) {
 	}
 	raw := hpsbt.Marshal()
 
-	msg := HashMessageForSignature(msgTx.TxHash().String())
+	msg := HashMessageForSignature(msgTx.TxHash().String(), chain)
 	sig := ecdsa.Sign(holder, msg).Serialize()
 	return hex.EncodeToString(raw), base64.RawURLEncoding.EncodeToString(sig), nil
 }
@@ -127,10 +127,16 @@ func (t *PartiallySignedTransaction) SigHash(idx int) []byte {
 	}
 	return hash
 }
-
-func HashMessageForSignature(msg string) []byte {
+func HashMessageForSignature(msg string, chain byte) []byte {
 	var buf bytes.Buffer
-	_ = wire.WriteVarString(&buf, 0, "Bitcoin Signed Message:\n")
+	prefix := "Bitcoin Signed Message:\n"
+	switch chain {
+	case SafeChainBitcoin:
+	case SafeChainLitecoin:
+		prefix = "Litecoin Signed Message:\n"
+	default:
+	}
+	_ = wire.WriteVarString(&buf, 0, prefix)
 	_ = wire.WriteVarString(&buf, 0, msg)
 	return chainhash.DoubleHashB(buf.Bytes())
 }

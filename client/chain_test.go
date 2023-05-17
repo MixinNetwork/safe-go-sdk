@@ -13,7 +13,12 @@ func TestChainRPC(t *testing.T) {
 
 	chains, err := ReadChains(ctx)
 	assert.Nil(err)
-	for _, c := range chains {
-		assert.Equal(int64(1), c.Chain)
+	for i, c := range chains {
+		if i == 0 {
+			assert.Equal(int64(1), c.Chain)
+		}
+		if i == 1 {
+			assert.Equal(int64(5), c.Chain)
+		}
 	}
 }
