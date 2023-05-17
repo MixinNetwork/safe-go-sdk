@@ -102,7 +102,7 @@ func fetchAssetId(mixinId string) (string, error) {
 	}
 	json.NewDecoder(resp.Body).Decode(&body)
 	if body.Data.MixinId != mixinId {
-		panic(mixinId)
+		return "", fmt.Errorf("get different mixin id: %s, %s", body.Data.MixinId, mixinId)
 	}
 	return body.Data.AssetId, nil
 }
