@@ -29,6 +29,7 @@ const (
 	SafeChainMVM      = 4
 
 	SafeBitcoinChainId  = "c6d0c728-2624-429b-8e0d-d9d19b6592fa"
+	SafeLitecoinChainId = "76c802a2-7c88-447f-a93e-c29c9e5dd9c8"
 	SafeEthereumChainId = "43d61dcd-e413-450d-80b8-101d5e903357"
 	SafeMVMChainId      = "a0ffd769-5850-4b48-9651-d2ae44a3e64d"
 )
@@ -110,6 +111,11 @@ func GetSafeBTCAssetId(chainId, holder string) (string, error) {
 	switch chainId {
 	case SafeBitcoinChainId:
 		addr := GetFactoryAssetAddress(SafeBitcoinChainId, "BTC", "Bitcoin", holder)
+		assetKey := strings.ToLower(addr.String())
+		bondId := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
+		return bondId, nil
+	case SafeLitecoinChainId:
+		addr := GetFactoryAssetAddress(SafeBitcoinChainId, "LTC", "Litecoin", holder)
 		assetKey := strings.ToLower(addr.String())
 		bondId := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
 		return bondId, nil
