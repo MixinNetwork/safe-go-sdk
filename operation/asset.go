@@ -85,12 +85,12 @@ func GetFactoryAssetAddress(assetId, symbol, name string, holder string) common.
 	return common.BytesToAddress(crypto.Keccak256(input))
 }
 
-func fetchAssetId(mixinId string) string {
+func fetchAssetId(mixinId string) (string, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	path := "https://api.mixin.one/network/assets/" + mixinId
 	resp, err := client.Get(path)
 	if err != nil {
-		panic(mixinId)
+		return "", fmt.Errorf("fetchAssetId(%s) => %v", mixinId, err)
 	}
 	defer resp.Body.Close()
 
@@ -104,7 +104,7 @@ func fetchAssetId(mixinId string) string {
 	if body.Data.MixinId != mixinId {
 		panic(mixinId)
 	}
-	return body.Data.AssetId
+	return body.Data.AssetId, nil
 }
 
 func GetSafeBTCAssetId(chainId, holder string) (string, error) {
@@ -112,12 +112,18 @@ func GetSafeBTCAssetId(chainId, holder string) (string, error) {
 	case SafeBitcoinChainId:
 		addr := GetFactoryAssetAddress(chainId, "BTC", "Bitcoin", holder)
 		assetKey := strings.ToLower(addr.String())
-		bondId := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
+		bondId, err := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
+		if err != nil {
+			return "", err
+		}
 		return bondId, nil
 	case SafeLitecoinChainId:
 		addr := GetFactoryAssetAddress(chainId, "LTC", "Litecoin", holder)
 		assetKey := strings.ToLower(addr.String())
-		bondId := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
+		bondId, err := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
+		if err != nil {
+			return "", err
+		}
 		return bondId, nil
 	default:
 		return "", fmt.Errorf("Unsupported Chain Id %s", chainId)
