@@ -19,6 +19,9 @@ const (
 
 	MaxTransactionSequence = 0xffffffff
 	MaxStandardTxWeight    = 300000
+
+	ChainBitcoin  = 1
+	ChainLitecoin = 5
 )
 
 type Input struct {
@@ -37,21 +40,21 @@ type Output struct {
 	Coinbase bool
 }
 
-func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*Output, fvb int64, rid []byte) (int64, error) {
+func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*Output, fvb int64, rid []byte, chain byte) (int64, error) {
 	msgTx := wire.NewMsgTx(2)
 
-	mainAddress, mainSatoshi, err := addInputs(msgTx, mainInputs)
+	mainAddress, mainSatoshi, err := addInputs(msgTx, mainInputs, chain)
 	if err != nil {
 		return 0, fmt.Errorf("addInputs(main) => %v", err)
 	}
-	_, feeSatoshi, err := addInputs(msgTx, feeInputs)
+	_, feeSatoshi, err := addInputs(msgTx, feeInputs, chain)
 	if err != nil {
 		return 0, fmt.Errorf("addInputs(fee) => %v", err)
 	}
 
 	var outputSatoshi int64
 	for _, out := range outputs {
-		err := addOutput(msgTx, out.Address, out.Satoshi)
+		err := addOutput(msgTx, out.Address, out.Satoshi, chain)
 		if err != nil {
 			return 0, fmt.Errorf("addOutput(%s, %d) => %v", out.Address, out.Satoshi, err)
 		}
@@ -61,7 +64,7 @@ func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*
 		return 0, fmt.Errorf("insufficient %s %d %d", "main", mainSatoshi, outputSatoshi)
 	}
 	if change := mainSatoshi - outputSatoshi; change > 0 {
-		err := addOutput(msgTx, mainAddress, change)
+		err := addOutput(msgTx, mainAddress, change, chain)
 		if err != nil {
 			return 0, fmt.Errorf("addOutput(%s, %d) => %v", mainAddress, change, err)
 		}
@@ -78,11 +81,11 @@ func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*
 	return 0, nil
 }
 
-func addInputs(tx *wire.MsgTx, inputs []*Input) (string, int64, error) {
+func addInputs(tx *wire.MsgTx, inputs []*Input, chain byte) (string, int64, error) {
 	var address string
 	var inputSatoshi int64
 	for _, input := range inputs {
-		addr, err := addInput(tx, input)
+		addr, err := addInput(tx, input, chain)
 		if err != nil {
 			return "", 0, err
 		}
@@ -97,7 +100,7 @@ func addInputs(tx *wire.MsgTx, inputs []*Input) (string, int64, error) {
 	return address, inputSatoshi, nil
 }
 
-func addInput(tx *wire.MsgTx, in *Input) (string, error) {
+func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
 	var addr string
 	hash, err := chainhash.NewHashFromStr(in.TransactionHash)
 	if err != nil {
@@ -116,7 +119,7 @@ func addInput(tx *wire.MsgTx, in *Input) (string, error) {
 	switch typ {
 	case InputTypeP2WPKHAccoutant:
 		in.Script = btcutil.Hash160(in.Script)
-		wpkh, err := btcutil.NewAddressWitnessPubKeyHash(in.Script, &chaincfg.MainNetParams)
+		wpkh, err := btcutil.NewAddressWitnessPubKeyHash(in.Script, netConfig(chain))
 		if err != nil {
 			return "", err
 		}
@@ -132,7 +135,7 @@ func addInput(tx *wire.MsgTx, in *Input) (string, error) {
 		txIn.Sequence = MaxTransactionSequence
 	case InputTypeP2WSHMultisigHolderSigner:
 		msh := sha256.Sum256(in.Script)
-		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], &chaincfg.MainNetParams)
+		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], netConfig(chain))
 		if err != nil {
 			return "", err
 		}
@@ -140,7 +143,7 @@ func addInput(tx *wire.MsgTx, in *Input) (string, error) {
 		txIn.Sequence = MaxTransactionSequence
 	case InputTypeP2WSHMultisigObserverSigner:
 		msh := sha256.Sum256(in.Script)
-		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], &chaincfg.MainNetParams)
+		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], netConfig(chain))
 		if err != nil {
 			return "", err
 		}
@@ -156,8 +159,8 @@ func addInput(tx *wire.MsgTx, in *Input) (string, error) {
 	return addr, nil
 }
 
-func addOutput(tx *wire.MsgTx, address string, satoshi int64) error {
-	addr, err := btcutil.DecodeAddress(address, &chaincfg.MainNetParams)
+func addOutput(tx *wire.MsgTx, address string, satoshi int64, chain byte) error {
+	addr, err := btcutil.DecodeAddress(address, netConfig(chain))
 	if err != nil {
 		return err
 	}
@@ -177,4 +180,23 @@ func checkScriptType(script []byte) int {
 		return InputTypeP2WSHMultisigHolderSigner
 	}
 	panic(hex.EncodeToString(script))
+}
+
+func netConfig(chain byte) *chaincfg.Params {
+	switch chain {
+	case ChainBitcoin:
+		return &chaincfg.MainNetParams
+	case ChainLitecoin:
+		return &chaincfg.Params{
+			Net:             0xdbb6c0fb,
+			Bech32HRPSegwit: "ltc",
+
+			PubKeyHashAddrID:        0x30,
+			ScriptHashAddrID:        0x32,
+			WitnessPubKeyHashAddrID: 0x06,
+			WitnessScriptHashAddrID: 0x0A,
+		}
+	default:
+		panic(chain)
+	}
 }
