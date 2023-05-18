@@ -200,3 +200,11 @@ func netConfig(chain byte) *chaincfg.Params {
 		panic(chain)
 	}
 }
+
+func init() {
+	ltcParams := netConfig(ChainLitecoin)
+	err := chaincfg.Register(ltcParams)
+	if err != nil {
+		panic(err)
+	}
+}
