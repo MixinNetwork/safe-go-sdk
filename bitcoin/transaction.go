@@ -56,7 +56,7 @@ func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*
 	for _, out := range outputs {
 		err := addOutput(msgTx, out.Address, out.Satoshi, chain)
 		if err != nil {
-			return 0, fmt.Errorf("addOutput(%s, %d) => %v", out.Address, out.Satoshi, err)
+			return 0, fmt.Errorf("addOutput(%s, %d, %d) => %v", out.Address, out.Satoshi, chain, err)
 		}
 		outputSatoshi = outputSatoshi + out.Satoshi
 	}
@@ -66,7 +66,7 @@ func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*
 	if change := mainSatoshi - outputSatoshi; change > 0 {
 		err := addOutput(msgTx, mainAddress, change, chain)
 		if err != nil {
-			return 0, fmt.Errorf("addOutput(%s, %d) => %v", mainAddress, change, err)
+			return 0, fmt.Errorf("addOutput(%s, %d, %d) => %v", mainAddress, change, chain, err)
 		}
 	}
 
