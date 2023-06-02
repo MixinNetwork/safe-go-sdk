@@ -24,7 +24,7 @@ type Account struct {
 	Chain      int64       `json:"chain"`
 	Outputs    []*Output   `json:"outputs"`
 	Script     string      `json:"script"`
-	Status     string      `json:"status"`
+	State      string      `json:"state"`
 	Error      any         `json:"error,omitempty"`
 }
 
