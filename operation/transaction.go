@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"log"
 
-	"github.com/MixinNetwork/mixin/common"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"github.com/btcsuite/btcd/btcutil/psbt"
@@ -15,6 +13,8 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 )
+
+const SigHashType = txscript.SigHashAll | txscript.SigHashAnyOneCanPay
 
 func SignSafeTx(rawStr, privateStr string, chain byte) (string, string, error) {
 	rawb, _ := hex.DecodeString(rawStr)
@@ -46,20 +46,16 @@ func SignSafeTx(rawStr, privateStr string, chain byte) (string, string, error) {
 }
 
 type PartiallySignedTransaction struct {
-	Hash   string
-	Fee    int64
-	Packet *psbt.Packet
+	*psbt.Packet
+}
+
+func (raw *PartiallySignedTransaction) Hash() string {
+	return raw.UnsignedTx.TxHash().String()
 }
 
 func (raw *PartiallySignedTransaction) Marshal() []byte {
-	enc := common.NewEncoder()
-	hash, err := hex.DecodeString(raw.Hash)
-	if err != nil || len(hash) != 32 {
-		panic(raw.Hash)
-	}
-
 	var rawBuffer bytes.Buffer
-	err = raw.Packet.Serialize(&rawBuffer)
+	err := raw.Serialize(&rawBuffer)
 	if err != nil {
 		panic(err)
 	}
@@ -68,56 +64,26 @@ func (raw *PartiallySignedTransaction) Marshal() []byte {
 	if err != nil {
 		panic(err)
 	}
-
-	raw.writeBytes(enc, hash)
-	raw.writeBytes(enc, rb)
-	enc.WriteUint64(uint64(raw.Fee))
-	return enc.Bytes()
+	return rb
 }
 
 func UnmarshalPartiallySignedTransaction(b []byte) (*PartiallySignedTransaction, error) {
-	dec := common.NewDecoder(b)
-	hash, err := dec.ReadBytes()
+	pkt, err := psbt.NewFromRawBytes(bytes.NewReader(b), false)
 	if err != nil {
 		return nil, err
-	}
-	raw, err := dec.ReadBytes()
-	if err != nil {
-		return nil, err
-	}
-	fee, err := dec.ReadUint64()
-	if err != nil {
-		return nil, err
-	}
-	pkt, err := psbt.NewFromRawBytes(bytes.NewReader(raw), false)
-	if err != nil {
-		return nil, err
-	}
-	pfee, err := pkt.GetTxFee()
-	if err != nil {
-		return nil, err
-	}
-	if uint64(pfee) != fee {
-		return nil, fmt.Errorf("fee %d %d", fee, pfee)
-	}
-	if hex.EncodeToString(hash) != pkt.UnsignedTx.TxHash().String() {
-		return nil, fmt.Errorf("hash %x %s", hash, pkt.UnsignedTx.TxHash().String())
 	}
 	return &PartiallySignedTransaction{
-		Hash:   hex.EncodeToString(hash),
-		Fee:    int64(fee),
 		Packet: pkt,
 	}, nil
 }
 
-func (t *PartiallySignedTransaction) SigHash(idx int) []byte {
-	psbt := t.Packet
+func (psbt *PartiallySignedTransaction) SigHash(idx int) []byte {
 	tx := psbt.UnsignedTx
 	pin := psbt.Inputs[idx]
 	satoshi := pin.WitnessUtxo.Value
 	pof := txscript.NewCannedPrevOutputFetcher(pin.WitnessScript, satoshi)
 	tsh := txscript.NewTxSigHashes(tx, pof)
-	hash, err := txscript.CalcWitnessSigHash(pin.WitnessScript, tsh, txscript.SigHashAll, tx, idx, satoshi)
+	hash, err := txscript.CalcWitnessSigHash(pin.WitnessScript, tsh, SigHashType, tx, idx, satoshi)
 	if err != nil {
 		panic(err)
 	}
@@ -127,6 +93,7 @@ func (t *PartiallySignedTransaction) SigHash(idx int) []byte {
 	}
 	return hash
 }
+
 func HashMessageForSignature(msg string, chain byte) []byte {
 	var buf bytes.Buffer
 	prefix := "Bitcoin Signed Message:\n"
@@ -139,9 +106,4 @@ func HashMessageForSignature(msg string, chain byte) []byte {
 	_ = wire.WriteVarString(&buf, 0, prefix)
 	_ = wire.WriteVarString(&buf, 0, msg)
 	return chainhash.DoubleHashB(buf.Bytes())
-}
-
-func (raw *PartiallySignedTransaction) writeBytes(enc *common.Encoder, b []byte) {
-	enc.WriteInt(len(b))
-	enc.Write(b)
 }
