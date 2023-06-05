@@ -12,20 +12,14 @@ type Output struct {
 	OutputIndex     uint32 `json:"output_index"`
 }
 
-type Accountant struct {
-	Address string    `json:"address"`
-	Outputs []*Output `json:"outputs"`
-}
-
 type Account struct {
-	ID         string      `json:"id"`
-	Accountant *Accountant `json:"accountant"`
-	Address    string      `json:"address"`
-	Chain      int64       `json:"chain"`
-	Outputs    []*Output   `json:"outputs"`
-	Script     string      `json:"script"`
-	State      string      `json:"state"`
-	Error      any         `json:"error,omitempty"`
+	ID      string    `json:"id"`
+	Address string    `json:"address"`
+	Chain   int64     `json:"chain"`
+	Outputs []*Output `json:"outputs"`
+	Script  string    `json:"script"`
+	State   string    `json:"state"`
+	Error   any       `json:"error,omitempty"`
 }
 
 func ReadAccount(ctx context.Context, id string) (*Account, error) {
