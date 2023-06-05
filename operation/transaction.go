@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"log"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -12,6 +13,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/cosmos/btcutil"
 )
 
 const SigHashType = txscript.SigHashAll | txscript.SigHashAnyOneCanPay
@@ -106,4 +108,27 @@ func HashMessageForSignature(msg string, chain byte) []byte {
 	_ = wire.WriteVarString(&buf, 0, prefix)
 	_ = wire.WriteVarString(&buf, 0, msg)
 	return chainhash.DoubleHashB(buf.Bytes())
+}
+
+func parseBitcoinCompressedPublicKey(public string) (*btcutil.AddressPubKey, error) {
+	pub, err := hex.DecodeString(public)
+	if err != nil {
+		return nil, err
+	}
+	return btcutil.NewAddressPubKey(pub, netconfig(ChainBitcoin))
+}
+
+func VerifySignatureDER(public string, msg, sig []byte) error {
+	pub, err := parseBitcoinCompressedPublicKey(public)
+	if err != nil {
+		return err
+	}
+	der, err := ecdsa.ParseDERSignature(sig)
+	if err != nil {
+		return err
+	}
+	if der.Verify(msg, pub.PubKey()) {
+		return nil
+	}
+	return fmt.Errorf("bitcoin.VerifySignature(%s, %x, %x)", public, msg, sig)
 }
