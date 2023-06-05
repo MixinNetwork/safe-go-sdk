@@ -8,8 +8,8 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 )
 
-func ApproveSafeAccount(address, priv string, chain byte) (string, error) {
-	hash := HashMessageForSignature(address, chain)
+func SignSafeMessage(msg, priv string, chain byte) (string, error) {
+	hash := HashMessageForSignature(msg, chain)
 	b, err := hex.DecodeString(priv)
 	if err != nil {
 		return "", err
