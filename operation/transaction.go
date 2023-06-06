@@ -18,7 +18,7 @@ import (
 
 const SigHashType = txscript.SigHashAll | txscript.SigHashAnyOneCanPay
 
-func SignSafeTx(rawStr, privateStr string, chain byte) (string, string, error) {
+func SignSafeTx(rawStr, privateStr, txId string, chain byte) (string, string, error) {
 	rawb, _ := hex.DecodeString(rawStr)
 	hpsbt, err := UnmarshalPartiallySignedTransaction(rawb)
 	if err != nil {
@@ -42,7 +42,8 @@ func SignSafeTx(rawStr, privateStr string, chain byte) (string, string, error) {
 	}
 	raw := hpsbt.Marshal()
 
-	msg := HashMessageForSignature(msgTx.TxHash().String(), chain)
+	ms := fmt.Sprintf("APPROVE:%s:%s", txId, msgTx.TxHash().String())
+	msg := HashMessageForSignature(ms, chain)
 	sig := ecdsa.Sign(holder, msg).Serialize()
 	return hex.EncodeToString(raw), base64.RawURLEncoding.EncodeToString(sig), nil
 }
