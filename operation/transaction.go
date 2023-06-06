@@ -115,7 +115,7 @@ func parseBitcoinCompressedPublicKey(public string) (*btcutil.AddressPubKey, err
 	if err != nil {
 		return nil, err
 	}
-	return btcutil.NewAddressPubKey(pub, netconfig(ChainBitcoin))
+	return btcutil.NewAddressPubKey(pub, netConfig(ChainBitcoin))
 }
 
 func VerifySignatureDER(public string, msg, sig []byte) error {
