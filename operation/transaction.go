@@ -17,8 +17,12 @@ import (
 
 const SigHashType = txscript.SigHashAll | txscript.SigHashAnyOneCanPay
 
-func SignSafeTx(rawStr, privateStr, txId string, chain byte) (string, error) {
-	rawb, _ := hex.DecodeString(rawStr)
+func SignSafeTx(rawStr, privateStr string, chain byte) (string, error) {
+	rawb, err := hex.DecodeString(rawStr)
+	if err != nil {
+		return "", err
+	}
+
 	hpsbt, err := UnmarshalPartiallySignedTransaction(rawb)
 	if err != nil {
 		return "", err
