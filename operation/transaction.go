@@ -2,6 +2,7 @@ package operation
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -18,9 +19,12 @@ import (
 const SigHashType = txscript.SigHashAll | txscript.SigHashAnyOneCanPay
 
 func SignSafeTx(rawStr, privateStr string, chain byte) (string, error) {
-	rawb, err := hex.DecodeString(rawStr)
+	rawb, err := base64.RawURLEncoding.DecodeString(rawStr)
 	if err != nil {
-		return "", err
+		rawb, err = hex.DecodeString(rawStr)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	hpsbt, err := UnmarshalPartiallySignedTransaction(rawb)
