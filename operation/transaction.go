@@ -2,7 +2,6 @@ package operation
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -18,15 +17,15 @@ import (
 
 const SigHashType = txscript.SigHashAll | txscript.SigHashAnyOneCanPay
 
-func SignSafeTx(rawStr, privateStr, txId string, chain byte) (string, string, error) {
+func SignSafeTx(rawStr, privateStr, txId string, chain byte) (string, error) {
 	rawb, _ := hex.DecodeString(rawStr)
 	hpsbt, err := UnmarshalPartiallySignedTransaction(rawb)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	seed, err := hex.DecodeString(privateStr)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	holder, _ := btcec.PrivKeyFromBytes(seed)
 
@@ -41,11 +40,7 @@ func SignSafeTx(rawStr, privateStr, txId string, chain byte) (string, string, er
 		}}
 	}
 	raw := hpsbt.Marshal()
-
-	ms := fmt.Sprintf("APPROVE:%s:%s", txId, msgTx.TxHash().String())
-	msg := HashMessageForSignature(ms, chain)
-	sig := ecdsa.Sign(holder, msg).Serialize()
-	return hex.EncodeToString(raw), base64.RawURLEncoding.EncodeToString(sig), nil
+	return hex.EncodeToString(raw), nil
 }
 
 type PartiallySignedTransaction struct {
