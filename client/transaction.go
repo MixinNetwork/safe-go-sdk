@@ -46,12 +46,11 @@ type transactionRequest struct {
 	Signature string `json:"signature"`
 }
 
-func ApproveTransaction(ctx context.Context, id string, chain int64, raw, signature string) (*Transaction, error) {
+func ApproveTransaction(ctx context.Context, id string, chain int64, raw string) (*Transaction, error) {
 	req := transactionRequest{
-		Action:    "approve",
-		Chain:     chain,
-		Raw:       raw,
-		Signature: signature,
+		Action: "approve",
+		Chain:  chain,
+		Raw:    raw,
 	}
 	reqBuf, err := json.Marshal(req)
 	if err != nil {
