@@ -132,3 +132,28 @@ func VerifySignatureDER(public string, msg, sig []byte) error {
 	}
 	return fmt.Errorf("bitcoin.VerifySignature(%s, %x, %x)", public, msg, sig)
 }
+
+func CheckTransactionPartiallySignedBy(raw, public string) bool {
+	b, _ := hex.DecodeString(raw)
+	psbt, _ := UnmarshalPartiallySignedTransaction(b)
+
+	for i := range psbt.Inputs {
+		pin := psbt.Inputs[i]
+		sigs := make(map[string][]byte, 2)
+		for _, ps := range pin.PartialSigs {
+			pub := hex.EncodeToString(ps.PubKey)
+			sigs[pub] = ps.Signature
+		}
+
+		if sigs[public] == nil {
+			return false
+		}
+		hash := psbt.SigHash(i)
+		err := VerifySignatureDER(public, hash, sigs[public])
+		if err != nil {
+			return false
+		}
+	}
+
+	return len(psbt.Inputs) > 0
+}
