@@ -93,10 +93,6 @@ func (psbt *PartiallySignedTransaction) SigHash(idx int) []byte {
 	if err != nil {
 		panic(err)
 	}
-	sigHashes := psbt.Unknowns[0].Value
-	if !bytes.Equal(hash, sigHashes[idx*32:idx*32+32]) {
-		panic(idx)
-	}
 	return hash
 }
 
