@@ -14,6 +14,7 @@ type Deposit struct {
 	OutputIndex     int64     `json:"output_index"`
 	Receiver        string    `json:"receiver"`
 	TransactionHash string    `json:"transaction_hash"`
+	SentHash        string    `json:"sent_hash"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
 
