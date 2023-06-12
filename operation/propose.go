@@ -1,6 +1,8 @@
 package operation
 
 import (
+	"encoding/binary"
+
 	"github.com/MixinNetwork/go-safe-sdk/types"
 	"github.com/fox-one/mixin-sdk-go"
 	"github.com/gofrs/uuid"
@@ -15,7 +17,7 @@ const (
 	CurveLitcoin = 101
 )
 
-func ProposeAccount(operationId, publicKey string, owners []string, threshold byte, curve uint8) *types.Operation {
+func ProposeAccount(operationId, publicKey string, owners []string, threshold byte, curve uint8, timeLock uint16) *types.Operation {
 	op := types.Operation{
 		Id:     operationId,
 		Type:   110,
@@ -23,8 +25,9 @@ func ProposeAccount(operationId, publicKey string, owners []string, threshold by
 		Public: publicKey,
 	}
 
+	timelock := binary.BigEndian.AppendUint16(nil, timeLock)
 	total := byte(len(owners))
-	extra := []byte{threshold, total}
+	extra := append(timelock, threshold, total)
 	for _, o := range owners {
 		uid, err := uuid.FromString(o)
 		if err != nil {
