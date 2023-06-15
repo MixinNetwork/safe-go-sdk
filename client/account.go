@@ -16,6 +16,7 @@ type Account struct {
 	ID      string    `json:"id"`
 	Address string    `json:"address"`
 	Chain   int64     `json:"chain"`
+	Keys    []string  `json:"keys"`
 	Outputs []*Output `json:"outputs"`
 	Script  string    `json:"script"`
 	State   string    `json:"state"`
