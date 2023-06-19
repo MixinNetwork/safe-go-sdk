@@ -40,7 +40,10 @@ func SignSafeTx(rawStr, privateStr string, chain byte) (string, error) {
 	msgTx := hpsbt.Packet.UnsignedTx
 	log.Printf("%#v", msgTx)
 	for idx := range msgTx.TxIn {
-		hash := hpsbt.SigHash(idx)
+		hash, err := hpsbt.SigHash(idx)
+		if err != nil {
+			return "", err
+		}
 		sig := ecdsa.Sign(holder, hash).Serialize()
 		hpsbt.Packet.Inputs[idx].PartialSigs = []*psbt.PartialSig{{
 			PubKey:    holder.PubKey().SerializeCompressed(),
@@ -83,7 +86,7 @@ func UnmarshalPartiallySignedTransaction(b []byte) (*PartiallySignedTransaction,
 	}, nil
 }
 
-func (psbt *PartiallySignedTransaction) SigHash(idx int) []byte {
+func (psbt *PartiallySignedTransaction) SigHash(idx int) ([]byte, error) {
 	tx := psbt.UnsignedTx
 	pin := psbt.Inputs[idx]
 	satoshi := pin.WitnessUtxo.Value
@@ -91,9 +94,9 @@ func (psbt *PartiallySignedTransaction) SigHash(idx int) []byte {
 	tsh := txscript.NewTxSigHashes(tx, pof)
 	hash, err := txscript.CalcWitnessSigHash(pin.WitnessScript, tsh, SigHashType, tx, idx, satoshi)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return hash
+	return hash, nil
 }
 
 func HashMessageForSignature(msg string, chain byte) []byte {
@@ -148,8 +151,11 @@ func CheckTransactionPartiallySignedBy(raw, public string) bool {
 		if sigs[public] == nil {
 			return false
 		}
-		hash := psbt.SigHash(i)
-		err := VerifySignatureDER(public, hash, sigs[public])
+		hash, err := psbt.SigHash(i)
+		if err != nil {
+			return false
+		}
+		err = VerifySignatureDER(public, hash, sigs[public])
 		if err != nil {
 			return false
 		}
