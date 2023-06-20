@@ -11,9 +11,11 @@ type Deposit struct {
 	Amount          string    `json:"amount"`
 	AssetID         string    `json:"asset_id"`
 	Chain           int64     `json:"chain"`
+	Change          bool      `json:"change"`
 	OutputIndex     int64     `json:"output_index"`
 	Receiver        string    `json:"receiver"`
 	TransactionHash string    `json:"transaction_hash"`
+	Sender          string    `json:"sender"`
 	SentHash        string    `json:"sent_hash"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
