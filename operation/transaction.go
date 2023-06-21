@@ -19,9 +19,9 @@ import (
 const SigHashType = txscript.SigHashAll | txscript.SigHashAnyOneCanPay
 
 func SignSafeTx(rawStr, privateStr string, chain byte) (string, error) {
-	rawb, err := base64.RawURLEncoding.DecodeString(rawStr)
+	rawb, err := hex.DecodeString(rawStr)
 	if err != nil {
-		rawb, err = hex.DecodeString(rawStr)
+		rawb, err = base64.RawURLEncoding.DecodeString(rawStr)
 		if err != nil {
 			return "", err
 		}
