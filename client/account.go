@@ -47,12 +47,14 @@ func ReadAccount(ctx context.Context, id string) (*Account, error) {
 }
 
 type accountRequest struct {
+	Action    string `json:"action"`
 	Address   string `json:"address"`
 	Signature string `json:"signature"`
 }
 
 func ApproveAccount(ctx context.Context, id, address, signature string) (*Account, error) {
 	req := accountRequest{
+		Action:    "approved",
 		Address:   address,
 		Signature: signature,
 	}
