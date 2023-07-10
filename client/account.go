@@ -54,7 +54,7 @@ type accountRequest struct {
 
 func ApproveAccount(ctx context.Context, id, address, signature string) (*Account, error) {
 	req := accountRequest{
-		Action:    "approved",
+		Action:    "approve",
 		Address:   address,
 		Signature: signature,
 	}
