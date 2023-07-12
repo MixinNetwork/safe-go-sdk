@@ -80,3 +80,33 @@ func ApproveAccount(ctx context.Context, id, address, signature string) (*Accoun
 	}
 	return &body, nil
 }
+
+func CloseAccount(ctx context.Context, id, address, raw, hash string) (*Account, error) {
+	req := map[string]string{
+		"action":  "close",
+		"address": address,
+		"raw":     raw,
+		"hash":    hash,
+	}
+	reqBuf, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+	data, err := Request(ctx, "POST", fmt.Sprintf("/accounts/%s", id), reqBuf)
+	if err != nil {
+		return nil, err
+	}
+
+	var body Account
+	err = json.Unmarshal(data, &body)
+	if err != nil {
+		return nil, err
+	}
+	if body.Error != nil {
+		if fmt.Sprint(body.Error) == "404" {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("CloseAccount error %v", body.Error)
+	}
+	return &body, nil
+}
