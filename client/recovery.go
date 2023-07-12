@@ -18,6 +18,20 @@ type Recovery struct {
 	Error     any    `json:"error,omitempty"`
 }
 
+func ReadRecoveries(ctx context.Context) ([]*Recovery, error) {
+	data, err := Request(ctx, "GET", "/recoveries", nil)
+	if err != nil {
+		return nil, err
+	}
+	var body []*Recovery
+	err = json.Unmarshal(data, &body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
+
 func ReadRecovery(ctx context.Context, id string) (*Recovery, error) {
 	data, err := Request(ctx, "GET", fmt.Sprintf("/recoveries/%s", id), nil)
 	if err != nil {
