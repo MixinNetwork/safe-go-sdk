@@ -86,6 +86,19 @@ func UnmarshalPartiallySignedTransaction(b []byte) (*PartiallySignedTransaction,
 	}, nil
 }
 
+func MarshalWiredTransaction(msgTx *wire.MsgTx, encoding wire.MessageEncoding, chain byte) ([]byte, error) {
+	var rawBuffer bytes.Buffer
+	pver, err := protocolVersion(chain)
+	if err != nil {
+		return nil, fmt.Errorf("protocolVersion(%d) => %v", chain, err)
+	}
+	err = msgTx.BtcEncode(&rawBuffer, pver, encoding)
+	if err != nil {
+		return nil, fmt.Errorf("BtcEncode() => %v", err)
+	}
+	return rawBuffer.Bytes(), nil
+}
+
 func (psbt *PartiallySignedTransaction) SigHash(idx int) ([]byte, error) {
 	tx := psbt.UnsignedTx
 	pin := psbt.Inputs[idx]

@@ -4,12 +4,18 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"time"
 
+	"github.com/MixinNetwork/go-safe-sdk/operation"
+	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/btcutil/psbt"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -17,11 +23,19 @@ const (
 	InputTypeP2WSHMultisigHolderSigner   = 2
 	InputTypeP2WSHMultisigObserverSigner = 3
 
+	ValuePrecision = 8
+	ValueSatoshi   = 100000000
+
+	TimeLockMinimum = time.Hour * 1
+	TimeLockMaximum = time.Hour * 24 * 365
+
 	MaxTransactionSequence = 0xffffffff
 	MaxStandardTxWeight    = 300000
 
 	ChainBitcoin  = 1
 	ChainLitecoin = 5
+
+	SigHashType = txscript.SigHashAll | txscript.SigHashAnyOneCanPay
 )
 
 type Input struct {
@@ -79,6 +93,125 @@ func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*
 		return feeConsumed - feeSatoshi, fmt.Errorf("insufficient %s %d %d", "fee", feeConsumed, feeSatoshi)
 	}
 	return 0, nil
+}
+
+func BuildPartiallySignedTransaction(mainInputs []*Input, outputs []*Output, rid []byte, chain byte) (*operation.PartiallySignedTransaction, error) {
+	msgTx := wire.NewMsgTx(2)
+
+	mainAddress, mainSatoshi, err := addInputs(msgTx, mainInputs, chain)
+	if err != nil {
+		return nil, fmt.Errorf("addInputs(main) => %v", err)
+	}
+
+	var outputSatoshi int64
+	for _, out := range outputs {
+		err := addOutput(msgTx, out.Address, out.Satoshi, chain)
+		if err != nil {
+			return nil, fmt.Errorf("addOutput(%s, %d) => %v", out.Address, out.Satoshi, err)
+		}
+		outputSatoshi = outputSatoshi + out.Satoshi
+	}
+	if outputSatoshi > mainSatoshi {
+		return nil, fmt.Errorf("insufficient main %d %d", mainSatoshi, outputSatoshi)
+	}
+	mainChange := mainSatoshi - outputSatoshi
+	dust, err := operation.ValueDust(chain)
+	if err != nil {
+		return nil, err
+	}
+	if mainChange > dust {
+		err := addOutput(msgTx, mainAddress, mainChange, chain)
+		if err != nil {
+			return nil, fmt.Errorf("addOutput(%s, %d) => %v", mainAddress, mainChange, err)
+		}
+	}
+
+	estvb := (40 + len(msgTx.TxIn)*300 + (len(msgTx.TxOut)+1)*128) / 4
+	if len(rid) > 0 && len(rid) <= 64 {
+		estvb += len(rid)
+	}
+
+	if len(rid) > 0 && len(rid) <= 64 {
+		builder := txscript.NewScriptBuilder()
+		builder.AddOp(txscript.OP_RETURN)
+		builder.AddData(rid)
+		script, err := builder.Script()
+		if err != nil {
+			return nil, fmt.Errorf("return(%x) => %v", rid, err)
+		}
+		msgTx.AddTxOut(wire.NewTxOut(0, script))
+	}
+
+	rawBytes, err := operation.MarshalWiredTransaction(msgTx, wire.BaseEncoding, chain)
+	if err != nil {
+		return nil, err
+	}
+	if len(rawBytes) > estvb {
+		return nil, fmt.Errorf("estimation %d %d", len(rawBytes), estvb)
+	}
+	if estvb*4 > MaxStandardTxWeight {
+		return nil, fmt.Errorf("large %d", estvb)
+	}
+
+	tx := btcutil.NewTx(msgTx)
+	err = blockchain.CheckTransactionSanity(tx)
+	if err != nil {
+		return nil, fmt.Errorf("blockchain.CheckTransactionSanity() => %v", err)
+	}
+	lockTime := time.Now().Add(TimeLockMaximum)
+	err = mempool.CheckTransactionStandard(tx, txscript.LockTimeThreshold, lockTime, mempool.DefaultMinRelayTxFee, 2)
+	if err != nil {
+		return nil, fmt.Errorf("mempool.CheckTransactionStandard() => %v", err)
+	}
+
+	pkt, err := psbt.NewFromUnsignedTx(msgTx)
+	if err != nil {
+		return nil, fmt.Errorf("psbt.NewFromUnsignedTx() => %v", err)
+	}
+	for i, in := range mainInputs {
+		address := mainAddress
+		addr, err := btcutil.DecodeAddress(address, netConfig(chain))
+		if err != nil {
+			return nil, err
+		}
+		pkScript, err := txscript.PayToAddrScript(addr)
+		if err != nil {
+			return nil, err
+		}
+		pin := psbt.NewPsbtInput(nil, &wire.TxOut{
+			Value:    in.Satoshi,
+			PkScript: pkScript,
+		})
+		pin.WitnessScript = in.Script
+		pin.SighashType = SigHashType
+		if !pin.IsSane() {
+			return nil, fmt.Errorf("!pin.IsSane")
+		}
+		pkt.Inputs[i] = *pin
+	}
+	err = pkt.SanityCheck()
+	if err != nil {
+		return nil, fmt.Errorf("psbt.SanityCheck() => %v", err)
+	}
+
+	return &operation.PartiallySignedTransaction{
+		Packet: pkt,
+	}, nil
+}
+
+func ParseSatoshi(amount string) (int64, error) {
+	amt, err := decimal.NewFromString(amount)
+	if err != nil {
+		return 0, err
+	}
+	amt = amt.Mul(decimal.New(1, ValuePrecision))
+	if !amt.IsInteger() {
+		return 0, err
+	}
+	if !amt.BigInt().IsInt64() {
+		return 0, err
+	}
+	return amt.BigInt().Int64(), nil
 }
 
 func addInputs(tx *wire.MsgTx, inputs []*Input, chain byte) (string, int64, error) {
