@@ -13,7 +13,7 @@ type Transaction struct {
 	Hash    string   `json:"hash"`
 	Raw     string   `json:"raw"`
 	Signers []string `json:"signers"`
-	State   string   `json:state"`
+	State   string   `json:"state"`
 	Error   any      `json:"error,omitempty"`
 }
 
