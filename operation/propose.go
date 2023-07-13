@@ -15,12 +15,20 @@ const (
 
 	CurveBitcoin = 1
 	CurveLitcoin = 101
+
+	// For all Bitcoin like chains
+	ActionBitcoinSafeProposeAccount     = 110
+	ActionBitcoinSafeApproveAccount     = 111
+	ActionBitcoinSafeProposeTransaction = 112
+	ActionBitcoinSafeApproveTransaction = 113
+	ActionBitcoinSafeRevokeTransaction  = 114
+	ActionBitcoinSafeCloseAccount       = 115
 )
 
 func ProposeAccount(operationId, publicKey string, owners []string, threshold byte, curve uint8, timeLock uint16) *types.Operation {
 	op := types.Operation{
 		Id:     operationId,
-		Type:   110,
+		Type:   ActionBitcoinSafeProposeAccount,
 		Curve:  curve,
 		Public: publicKey,
 	}
@@ -44,7 +52,7 @@ func ProposeTransaction(operationId, publicKey string, head, destination string,
 	extra = append(extra, []byte(destination)...)
 	op := &types.Operation{
 		Id:     operationId,
-		Type:   112,
+		Type:   ActionBitcoinSafeProposeTransaction,
 		Curve:  curve,
 		Public: publicKey,
 		Extra:  extra,
