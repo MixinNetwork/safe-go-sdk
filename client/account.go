@@ -10,6 +10,8 @@ type Output struct {
 	TransactionHash string `json:"transaction_hash"`
 	Satoshi         int64  `json:"satoshi"`
 	OutputIndex     uint32 `json:"output_index"`
+	Script          string `json:"script"`
+	Sequence        uint32 `json:"sequence"`
 }
 
 type Account struct {
