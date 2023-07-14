@@ -47,8 +47,9 @@ func ProposeAccount(operationId, publicKey string, owners []string, threshold by
 	return &op
 }
 
-func ProposeTransaction(operationId, publicKey string, head, destination string, curve uint8) *types.Operation {
-	extra := uuid.FromStringOrNil(head).Bytes()
+func ProposeTransaction(operationId, publicKey string, typ byte, head, destination string, curve uint8) *types.Operation {
+	extra := []byte{typ}
+	extra = append(extra, uuid.FromStringOrNil(head).Bytes()...)
 	extra = append(extra, []byte(destination)...)
 	op := &types.Operation{
 		Id:     operationId,
