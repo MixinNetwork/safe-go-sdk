@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/MixinNetwork/go-safe-sdk/common"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"github.com/btcsuite/btcd/btcutil"
@@ -131,7 +132,7 @@ func parseBitcoinCompressedPublicKey(public string) (*btcutil.AddressPubKey, err
 	if err != nil {
 		return nil, err
 	}
-	return btcutil.NewAddressPubKey(pub, common.NetConfig(ChainBitcoin))
+	return btcutil.NewAddressPubKey(pub, common.NetConfig(common.ChainBitcoin))
 }
 
 func VerifySignatureDER(public string, msg, sig []byte) error {
