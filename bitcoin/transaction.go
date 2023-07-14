@@ -35,7 +35,9 @@ const (
 	ChainBitcoin  = 1
 	ChainLitecoin = 5
 
-	SigHashType = txscript.SigHashAll | txscript.SigHashAnyOneCanPay
+	ScriptPubKeyTypeWitnessKeyHash    = "witness_v0_keyhash"
+	ScriptPubKeyTypeWitnessScriptHash = "witness_v0_scripthash"
+	SigHashType                       = txscript.SigHashAll | txscript.SigHashAnyOneCanPay
 )
 
 type Input struct {
@@ -212,6 +214,25 @@ func ParseSatoshi(amount string) (int64, error) {
 		return 0, err
 	}
 	return amt.BigInt().Int64(), nil
+}
+
+func ParseSequence(lock time.Duration, chain byte) (uint64, error) {
+	if lock < TimeLockMinimum || lock > TimeLockMaximum {
+		return 0, fmt.Errorf("Invalid lock: %s", lock)
+	}
+	blockDuration := 10 * time.Minute
+	switch chain {
+	case ChainBitcoin:
+	case ChainLitecoin:
+		blockDuration = 150 * time.Second
+	default:
+	}
+	// FIXME check litecoin timelock consensus as this may exceed 0xffff
+	lock = lock / blockDuration
+	if lock >= 0xffff {
+		lock = 0xffff
+	}
+	return uint64(lock), nil
 }
 
 func addInputs(tx *wire.MsgTx, inputs []*Input, chain byte) (string, int64, error) {

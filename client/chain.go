@@ -10,7 +10,7 @@ type Head struct {
 	CreatedAt time.Time `json:"created_at"`
 	Fee       int64     `json:"fee"`
 	Hash      string    `json:"hash"`
-	Height    int64     `json:"height"`
+	Height    uint64    `json:"height"`
 	ID        string    `json:"id"`
 }
 
