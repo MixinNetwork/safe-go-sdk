@@ -23,6 +23,9 @@ const (
 	ActionBitcoinSafeApproveTransaction = 113
 	ActionBitcoinSafeRevokeTransaction  = 114
 	ActionBitcoinSafeCloseAccount       = 115
+
+	TransactionTypeNormal   = 0
+	TransactionTypeRecovery = 1
 )
 
 func ProposeAccount(operationId, publicKey string, owners []string, threshold byte, curve uint8, timeLock uint16) *types.Operation {
