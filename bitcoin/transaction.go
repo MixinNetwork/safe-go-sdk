@@ -15,29 +15,6 @@ import (
 	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/shopspring/decimal"
-)
-
-const (
-	InputTypeP2WPKHAccoutant             = 1
-	InputTypeP2WSHMultisigHolderSigner   = 2
-	InputTypeP2WSHMultisigObserverSigner = 3
-
-	ValuePrecision = 8
-	ValueSatoshi   = 100000000
-
-	TimeLockMinimum = time.Hour * 1
-	TimeLockMaximum = time.Hour * 24 * 365
-
-	MaxTransactionSequence = 0xffffffff
-	MaxStandardTxWeight    = 300000
-
-	ChainBitcoin  = 1
-	ChainLitecoin = 5
-
-	ScriptPubKeyTypeWitnessKeyHash    = "witness_v0_keyhash"
-	ScriptPubKeyTypeWitnessScriptHash = "witness_v0_scripthash"
-	SigHashType                       = txscript.SigHashAll | txscript.SigHashAnyOneCanPay
 )
 
 type Input struct {
@@ -199,40 +176,6 @@ func BuildPartiallySignedTransaction(mainInputs []*Input, outputs []*Output, rid
 	return &operation.PartiallySignedTransaction{
 		Packet: pkt,
 	}, nil
-}
-
-func ParseSatoshi(amount string) (int64, error) {
-	amt, err := decimal.NewFromString(amount)
-	if err != nil {
-		return 0, err
-	}
-	amt = amt.Mul(decimal.New(1, ValuePrecision))
-	if !amt.IsInteger() {
-		return 0, err
-	}
-	if !amt.BigInt().IsInt64() {
-		return 0, err
-	}
-	return amt.BigInt().Int64(), nil
-}
-
-func ParseSequence(lock time.Duration, chain byte) (uint64, error) {
-	if lock < TimeLockMinimum || lock > TimeLockMaximum {
-		return 0, fmt.Errorf("Invalid lock: %s", lock)
-	}
-	blockDuration := 10 * time.Minute
-	switch chain {
-	case ChainBitcoin:
-	case ChainLitecoin:
-		blockDuration = 150 * time.Second
-	default:
-	}
-	// FIXME check litecoin timelock consensus as this may exceed 0xffff
-	lock = lock / blockDuration
-	if lock >= 0xffff {
-		lock = 0xffff
-	}
-	return uint64(lock), nil
 }
 
 func addInputs(tx *wire.MsgTx, inputs []*Input, chain byte) (string, int64, error) {
