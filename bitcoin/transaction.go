@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/MixinNetwork/go-safe-sdk/common"
 	"github.com/MixinNetwork/go-safe-sdk/operation"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/btcutil/psbt"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcd/txscript"
@@ -170,7 +170,7 @@ func BuildPartiallySignedTransaction(mainInputs []*Input, outputs []*Output, rid
 	}
 	for i, in := range mainInputs {
 		address := mainAddress
-		addr, err := btcutil.DecodeAddress(address, netConfig(chain))
+		addr, err := btcutil.DecodeAddress(address, common.NetConfig(chain))
 		if err != nil {
 			return nil, err
 		}
@@ -252,7 +252,7 @@ func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
 	switch typ {
 	case InputTypeP2WPKHAccoutant:
 		in.Script = btcutil.Hash160(in.Script)
-		wpkh, err := btcutil.NewAddressWitnessPubKeyHash(in.Script, netConfig(chain))
+		wpkh, err := btcutil.NewAddressWitnessPubKeyHash(in.Script, common.NetConfig(chain))
 		if err != nil {
 			return "", err
 		}
@@ -268,7 +268,7 @@ func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
 		txIn.Sequence = MaxTransactionSequence
 	case InputTypeP2WSHMultisigHolderSigner:
 		msh := sha256.Sum256(in.Script)
-		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], netConfig(chain))
+		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], common.NetConfig(chain))
 		if err != nil {
 			return "", err
 		}
@@ -276,7 +276,7 @@ func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
 		txIn.Sequence = MaxTransactionSequence
 	case InputTypeP2WSHMultisigObserverSigner:
 		msh := sha256.Sum256(in.Script)
-		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], netConfig(chain))
+		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], common.NetConfig(chain))
 		if err != nil {
 			return "", err
 		}
@@ -293,7 +293,7 @@ func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
 }
 
 func addOutput(tx *wire.MsgTx, address string, satoshi int64, chain byte) error {
-	addr, err := btcutil.DecodeAddress(address, netConfig(chain))
+	addr, err := btcutil.DecodeAddress(address, common.NetConfig(chain))
 	if err != nil {
 		return err
 	}
@@ -313,31 +313,4 @@ func checkScriptType(script []byte) int {
 		return InputTypeP2WSHMultisigHolderSigner
 	}
 	panic(hex.EncodeToString(script))
-}
-
-func netConfig(chain byte) *chaincfg.Params {
-	switch chain {
-	case ChainBitcoin:
-		return &chaincfg.MainNetParams
-	case ChainLitecoin:
-		return &chaincfg.Params{
-			Net:             0xdbb6c0fb,
-			Bech32HRPSegwit: "ltc",
-
-			PubKeyHashAddrID:        0x30,
-			ScriptHashAddrID:        0x32,
-			WitnessPubKeyHashAddrID: 0x06,
-			WitnessScriptHashAddrID: 0x0A,
-		}
-	default:
-		panic(chain)
-	}
-}
-
-func init() {
-	ltcParams := netConfig(ChainLitecoin)
-	err := chaincfg.Register(ltcParams)
-	if err != nil {
-		panic(err)
-	}
 }

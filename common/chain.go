@@ -1,4 +1,4 @@
-package operation
+package common
 
 import "github.com/btcsuite/btcd/chaincfg"
 
@@ -8,14 +8,14 @@ const (
 )
 
 func init() {
-	ltcParams := netConfig(ChainLitecoin)
+	ltcParams := NetConfig(ChainLitecoin)
 	err := chaincfg.Register(ltcParams)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func netConfig(chain byte) *chaincfg.Params {
+func NetConfig(chain byte) *chaincfg.Params {
 	switch chain {
 	case ChainBitcoin:
 		return &chaincfg.MainNetParams
