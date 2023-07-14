@@ -4,19 +4,25 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	"github.com/MixinNetwork/go-safe-sdk/bitcoin"
 )
 
+type Output struct {
+	TransactionHash string `json:"transaction_hash"`
+	Satoshi         int64  `json:"satoshi"`
+	OutputIndex     uint32 `json:"output_index"`
+	Script          string `json:"script"`
+	Sequence        uint32 `json:"sequence"`
+}
+
 type Account struct {
-	ID      string           `json:"id"`
-	Address string           `json:"address"`
-	Chain   int64            `json:"chain"`
-	Keys    []string         `json:"keys"`
-	Outputs []*bitcoin.Input `json:"outputs"`
-	Script  string           `json:"script"`
-	State   string           `json:"state"`
-	Error   any              `json:"error,omitempty"`
+	ID      string   `json:"id"`
+	Address string   `json:"address"`
+	Chain   int64    `json:"chain"`
+	Keys    []string `json:"keys"`
+	Outputs []Output `json:"outputs"`
+	Script  string   `json:"script"`
+	State   string   `json:"state"`
+	Error   any      `json:"error,omitempty"`
 }
 
 func ReadAccount(ctx context.Context, id string) (*Account, error) {
