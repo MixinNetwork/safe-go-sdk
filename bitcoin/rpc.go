@@ -47,6 +47,7 @@ type RPCBlock struct {
 	Hash   string   `json:"hash"`
 	Height uint64   `json:"height"`
 	Tx     []string `json:"tx"`
+	Time   int64    `json:"time"`
 }
 
 type RPCBlockWithTransactions struct {
@@ -90,6 +91,7 @@ func RPCGetTransactionOutput(chain byte, rpc, hash string, index int64) (*RPCTra
 			return nil, nil, err
 		}
 		output.Height = block.Height
+		output.Time = time.Unix(block.Time, 0)
 	}
 
 	rtb, err := hex.DecodeString(tx.Hex)

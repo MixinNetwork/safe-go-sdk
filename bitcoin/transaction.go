@@ -30,6 +30,7 @@ type Output struct {
 	Address  string
 	Satoshi  int64
 	Height   uint64
+	Time     time.Time
 	Coinbase bool
 }
 
