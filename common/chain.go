@@ -1,6 +1,10 @@
 package common
 
-import "github.com/btcsuite/btcd/chaincfg"
+import (
+	"fmt"
+
+	"github.com/btcsuite/btcd/chaincfg"
+)
 
 const (
 	ChainBitcoin  = 1
@@ -8,17 +12,17 @@ const (
 )
 
 func init() {
-	ltcParams := NetConfig(ChainLitecoin)
+	ltcParams, _ := NetConfig(ChainLitecoin)
 	err := chaincfg.Register(ltcParams)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func NetConfig(chain byte) *chaincfg.Params {
+func NetConfig(chain byte) (*chaincfg.Params, error) {
 	switch chain {
 	case ChainBitcoin:
-		return &chaincfg.MainNetParams
+		return &chaincfg.MainNetParams, nil
 	case ChainLitecoin:
 		return &chaincfg.Params{
 			Net:             0xdbb6c0fb,
@@ -31,8 +35,8 @@ func NetConfig(chain byte) *chaincfg.Params {
 
 			HDPublicKeyID:  [4]byte{0x01, 0x9d, 0xa4, 0x64},
 			HDPrivateKeyID: [4]byte{0x01, 0x9d, 0x9c, 0xfe},
-		}
+		}, nil
 	default:
-		panic(chain)
+		return nil, fmt.Errorf("invalid chain %d", chain)
 	}
 }

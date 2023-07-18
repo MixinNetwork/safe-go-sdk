@@ -52,7 +52,10 @@ func SignSafeTx(rawStr, privateStr string, chain byte) (string, error) {
 			Signature: sig,
 		}}
 	}
-	raw := hpsbt.Marshal()
+	raw, err := hpsbt.Marshal()
+	if err != nil {
+		return "", err
+	}
 	return hex.EncodeToString(raw), nil
 }
 
@@ -75,7 +78,8 @@ func parseBitcoinCompressedPublicKey(public string) (*btcutil.AddressPubKey, err
 	if err != nil {
 		return nil, err
 	}
-	return btcutil.NewAddressPubKey(pub, common.NetConfig(common.ChainBitcoin))
+	cfg, _ := common.NetConfig(common.ChainBitcoin)
+	return btcutil.NewAddressPubKey(pub, cfg)
 }
 
 func VerifySignatureDER(public string, msg, sig []byte) error {

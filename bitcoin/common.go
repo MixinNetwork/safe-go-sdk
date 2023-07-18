@@ -44,19 +44,19 @@ const (
 	TransactionConfirmations = 1
 )
 
-func ParseSatoshi(amount string) int64 {
+func ParseSatoshi(amount string) (int64, error) {
 	amt, err := decimal.NewFromString(amount)
 	if err != nil {
-		panic(amount)
+		return 0, err
 	}
 	amt = amt.Mul(decimal.New(1, ValuePrecision))
 	if !amt.IsInteger() {
-		panic(amount)
+		return 0, fmt.Errorf("invalid amount %s", amount)
 	}
 	if !amt.BigInt().IsInt64() {
-		panic(amount)
+		return 0, fmt.Errorf("invalid amount %s", amount)
 	}
-	return amt.BigInt().Int64()
+	return amt.BigInt().Int64(), nil
 }
 
 func ParseAddress(addr string, chain byte) ([]byte, error) {
@@ -74,7 +74,8 @@ func ParseAddress(addr string, chain byte) ([]byte, error) {
 	default:
 		return nil, fmt.Errorf("ParseAddress(%s, %d)", addr, chain)
 	}
-	bda, err := btcutil.DecodeAddress(addr, commonSafe.NetConfig(chain))
+	cfg, _ := commonSafe.NetConfig(chain)
+	bda, err := btcutil.DecodeAddress(addr, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("btcutil.DecodeAddress(%s, %d) => %v", addr, chain, err)
 	}
@@ -85,9 +86,9 @@ func ParseAddress(addr string, chain byte) ([]byte, error) {
 	return script, nil
 }
 
-func ParseSequence(lock time.Duration, chain byte) int64 {
+func ParseSequence(lock time.Duration, chain byte) (int64, error) {
 	if lock < TimeLockMinimum || lock > TimeLockMaximum {
-		panic(lock.String())
+		return 0, fmt.Errorf("invalid lock %d", lock)
 	}
 	blockDuration := 10 * time.Minute
 	switch chain {
@@ -101,7 +102,7 @@ func ParseSequence(lock time.Duration, chain byte) int64 {
 	if lock >= 0xffff {
 		lock = 0xffff
 	}
-	return int64(lock)
+	return int64(lock), nil
 }
 
 func CheckFinalization(num uint64, coinbase bool) bool {
@@ -136,7 +137,7 @@ func DeriveBIP32(public string, chainCode []byte, children ...uint32) (string, s
 			return "", "", err
 		}
 		if bytes.Equal(extPub.ChainCode(), chainCode) {
-			panic(i)
+			return "", "", fmt.Errorf("invalid cc %x:%x", extPub.ChainCode(), chainCode)
 		}
 	}
 	pub, err := extPub.ECPubKey()
@@ -146,7 +147,7 @@ func DeriveBIP32(public string, chainCode []byte, children ...uint32) (string, s
 	return extPub.String(), hex.EncodeToString(pub.SerializeCompressed()), nil
 }
 
-func HashMessageForSignature(msg string, chain byte) []byte {
+func HashMessageForSignature(msg string, chain byte) ([]byte, error) {
 	var buf bytes.Buffer
 	prefix := "Bitcoin Signed Message:\n"
 	switch chain {
@@ -154,11 +155,11 @@ func HashMessageForSignature(msg string, chain byte) []byte {
 	case ChainLitecoin:
 		prefix = "Litecoin Signed Message:\n"
 	default:
-		panic(chain)
+		return nil, fmt.Errorf("invalid chain %d", chain)
 	}
 	_ = wire.WriteVarString(&buf, 0, prefix)
 	_ = wire.WriteVarString(&buf, 0, msg)
-	return chainhash.DoubleHashB(buf.Bytes())
+	return chainhash.DoubleHashB(buf.Bytes()), nil
 }
 
 func IsInsufficientInputError(err error) bool {
