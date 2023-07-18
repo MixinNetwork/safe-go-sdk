@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/MixinNetwork/go-safe-sdk/bitcoin"
 	"github.com/MixinNetwork/go-safe-sdk/common"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
@@ -28,7 +29,7 @@ func SignSafeTx(rawStr, privateStr string, chain byte) (string, error) {
 		}
 	}
 
-	hpsbt, err := UnmarshalPartiallySignedTransaction(rawb)
+	hpsbt, err := bitcoin.UnmarshalPartiallySignedTransaction(rawb)
 	if err != nil {
 		return "", err
 	}
@@ -53,64 +54,6 @@ func SignSafeTx(rawStr, privateStr string, chain byte) (string, error) {
 	}
 	raw := hpsbt.Marshal()
 	return hex.EncodeToString(raw), nil
-}
-
-type PartiallySignedTransaction struct {
-	*psbt.Packet
-}
-
-func (raw *PartiallySignedTransaction) Hash() string {
-	return raw.UnsignedTx.TxHash().String()
-}
-
-func (raw *PartiallySignedTransaction) Marshal() []byte {
-	var rawBuffer bytes.Buffer
-	err := raw.Serialize(&rawBuffer)
-	if err != nil {
-		panic(err)
-	}
-	rb := rawBuffer.Bytes()
-	_, err = psbt.NewFromRawBytes(bytes.NewReader(rb), false)
-	if err != nil {
-		panic(err)
-	}
-	return rb
-}
-
-func UnmarshalPartiallySignedTransaction(b []byte) (*PartiallySignedTransaction, error) {
-	pkt, err := psbt.NewFromRawBytes(bytes.NewReader(b), false)
-	if err != nil {
-		return nil, err
-	}
-	return &PartiallySignedTransaction{
-		Packet: pkt,
-	}, nil
-}
-
-func MarshalWiredTransaction(msgTx *wire.MsgTx, encoding wire.MessageEncoding, chain byte) ([]byte, error) {
-	var rawBuffer bytes.Buffer
-	pver, err := protocolVersion(chain)
-	if err != nil {
-		return nil, fmt.Errorf("protocolVersion(%d) => %v", chain, err)
-	}
-	err = msgTx.BtcEncode(&rawBuffer, pver, encoding)
-	if err != nil {
-		return nil, fmt.Errorf("BtcEncode() => %v", err)
-	}
-	return rawBuffer.Bytes(), nil
-}
-
-func (psbt *PartiallySignedTransaction) SigHash(idx int) ([]byte, error) {
-	tx := psbt.UnsignedTx
-	pin := psbt.Inputs[idx]
-	satoshi := pin.WitnessUtxo.Value
-	pof := txscript.NewCannedPrevOutputFetcher(pin.WitnessScript, satoshi)
-	tsh := txscript.NewTxSigHashes(tx, pof)
-	hash, err := txscript.CalcWitnessSigHash(pin.WitnessScript, tsh, SigHashType, tx, idx, satoshi)
-	if err != nil {
-		return nil, err
-	}
-	return hash, nil
 }
 
 func HashMessageForSignature(msg string, chain byte) []byte {
@@ -152,7 +95,7 @@ func VerifySignatureDER(public string, msg, sig []byte) error {
 
 func CheckTransactionPartiallySignedBy(raw, public string) bool {
 	b, _ := hex.DecodeString(raw)
-	psbt, _ := UnmarshalPartiallySignedTransaction(b)
+	psbt, _ := bitcoin.UnmarshalPartiallySignedTransaction(b)
 
 	for i := range psbt.Inputs {
 		pin := psbt.Inputs[i]

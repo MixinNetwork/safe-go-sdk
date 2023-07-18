@@ -1,4 +1,4 @@
-package safe
+package common
 
 import "encoding/hex"
 
