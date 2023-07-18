@@ -57,6 +57,10 @@ type RPCBlockWithTransactions struct {
 }
 
 func RPCGetTransactionOutput(chain byte, rpc, hash string, index int64) (*RPCTransaction, *Output, error) {
+	cfg, err := common.NetConfig(chain)
+	if err != nil {
+		return nil, nil, err
+	}
 	tx, err := RPCGetTransaction(chain, rpc, hash)
 	if err != nil {
 		return nil, nil, err
@@ -116,7 +120,7 @@ func RPCGetTransactionOutput(chain byte, rpc, hash string, index int64) (*RPCTra
 	if err != nil {
 		return nil, nil, err
 	}
-	addr, err := script.Address(common.NetConfig(chain))
+	addr, err := script.Address(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -276,7 +280,7 @@ func callBitcoinRPC(rpc, method string, params []any) ([]byte, error) {
 		"jsonrpc": "2.0",
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	req, err := http.NewRequest("POST", rpc, bytes.NewReader(body))

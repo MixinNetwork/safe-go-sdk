@@ -3,7 +3,6 @@ package bitcoin
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -77,6 +76,10 @@ func EstimateTransactionFee(mainInputs []*Input, feeInputs []*Input, outputs []*
 
 func BuildPartiallySignedTransaction(mainInputs []*Input, outputs []*Output, rid []byte, chain byte) (*PartiallySignedTransaction, error) {
 	msgTx := wire.NewMsgTx(2)
+	cfg, err := common.NetConfig(chain)
+	if err != nil {
+		return nil, err
+	}
 
 	mainAddress, mainSatoshi, err := addInputs(msgTx, mainInputs, chain)
 	if err != nil {
@@ -150,7 +153,7 @@ func BuildPartiallySignedTransaction(mainInputs []*Input, outputs []*Output, rid
 	}
 	for i, in := range mainInputs {
 		address := mainAddress
-		addr, err := btcutil.DecodeAddress(address, common.NetConfig(chain))
+		addr, err := btcutil.DecodeAddress(address, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -199,6 +202,10 @@ func addInputs(tx *wire.MsgTx, inputs []*Input, chain byte) (string, int64, erro
 }
 
 func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
+	cfg, err := common.NetConfig(chain)
+	if err != nil {
+		return "", err
+	}
 	var addr string
 	hash, err := chainhash.NewHashFromStr(in.TransactionHash)
 	if err != nil {
@@ -210,14 +217,17 @@ func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
 			Index: in.Index,
 		},
 	}
-	typ := checkScriptType(in.Script)
+	typ, err := checkScriptType(in.Script)
+	if err != nil {
+		return "", err
+	}
 	if in.RouteBackup {
 		typ = InputTypeP2WSHMultisigObserverSigner
 	}
 	switch typ {
 	case InputTypeP2WPKHAccoutant:
 		in.Script = btcutil.Hash160(in.Script)
-		wpkh, err := btcutil.NewAddressWitnessPubKeyHash(in.Script, common.NetConfig(chain))
+		wpkh, err := btcutil.NewAddressWitnessPubKeyHash(in.Script, cfg)
 		if err != nil {
 			return "", err
 		}
@@ -233,7 +243,7 @@ func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
 		txIn.Sequence = MaxTransactionSequence
 	case InputTypeP2WSHMultisigHolderSigner:
 		msh := sha256.Sum256(in.Script)
-		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], common.NetConfig(chain))
+		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], cfg)
 		if err != nil {
 			return "", err
 		}
@@ -241,7 +251,7 @@ func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
 		txIn.Sequence = MaxTransactionSequence
 	case InputTypeP2WSHMultisigObserverSigner:
 		msh := sha256.Sum256(in.Script)
-		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], common.NetConfig(chain))
+		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], cfg)
 		if err != nil {
 			return "", err
 		}
@@ -258,7 +268,11 @@ func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
 }
 
 func addOutput(tx *wire.MsgTx, address string, satoshi int64, chain byte) error {
-	addr, err := btcutil.DecodeAddress(address, common.NetConfig(chain))
+	cfg, err := common.NetConfig(chain)
+	if err != nil {
+		return err
+	}
+	addr, err := btcutil.DecodeAddress(address, cfg)
 	if err != nil {
 		return err
 	}
@@ -270,14 +284,14 @@ func addOutput(tx *wire.MsgTx, address string, satoshi int64, chain byte) error 
 	return nil
 }
 
-func checkScriptType(script []byte) int {
+func checkScriptType(script []byte) (int, error) {
 	if len(script) == 33 {
-		return InputTypeP2WPKHAccoutant
+		return InputTypeP2WPKHAccoutant, nil
 	}
 	if len(script) > 100 {
-		return InputTypeP2WSHMultisigHolderSigner
+		return InputTypeP2WSHMultisigHolderSigner, nil
 	}
-	panic(hex.EncodeToString(script))
+	return 0, fmt.Errorf("Invalid script %x", script)
 }
 
 type PartiallySignedTransaction struct {
@@ -288,18 +302,18 @@ func (raw *PartiallySignedTransaction) Hash() string {
 	return raw.UnsignedTx.TxHash().String()
 }
 
-func (raw *PartiallySignedTransaction) Marshal() []byte {
+func (raw *PartiallySignedTransaction) Marshal() ([]byte, error) {
 	var rawBuffer bytes.Buffer
 	err := raw.Serialize(&rawBuffer)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	rb := rawBuffer.Bytes()
 	_, err = psbt.NewFromRawBytes(bytes.NewReader(rb), false)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return rb
+	return rb, nil
 }
 
 func UnmarshalPartiallySignedTransaction(b []byte) (*PartiallySignedTransaction, error) {
@@ -312,17 +326,13 @@ func UnmarshalPartiallySignedTransaction(b []byte) (*PartiallySignedTransaction,
 	}, nil
 }
 
-func (psbt *PartiallySignedTransaction) SigHash(idx int) []byte {
+func (psbt *PartiallySignedTransaction) SigHash(idx int) ([]byte, error) {
 	tx := psbt.UnsignedTx
 	pin := psbt.Inputs[idx]
 	satoshi := pin.WitnessUtxo.Value
 	pof := txscript.NewCannedPrevOutputFetcher(pin.WitnessScript, satoshi)
 	tsh := txscript.NewTxSigHashes(tx, pof)
-	hash, err := txscript.CalcWitnessSigHash(pin.WitnessScript, tsh, SigHashType, tx, idx, satoshi)
-	if err != nil {
-		panic(err)
-	}
-	return hash
+	return txscript.CalcWitnessSigHash(pin.WitnessScript, tsh, SigHashType, tx, idx, satoshi)
 }
 
 func MarshalWiredTransaction(msgTx *wire.MsgTx, encoding wire.MessageEncoding, chain byte) ([]byte, error) {
