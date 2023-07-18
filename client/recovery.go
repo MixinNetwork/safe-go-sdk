@@ -14,7 +14,7 @@ type Recovery struct {
 	Observer  string `json:"observer"`
 	Hash      string `json:"hash"`
 	Raw       string `json:"raw"`
-	State     string `json:state"`
+	State     string `json:"state"`
 	Error     any    `json:"error,omitempty"`
 }
 
