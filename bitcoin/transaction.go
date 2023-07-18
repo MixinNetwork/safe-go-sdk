@@ -312,7 +312,7 @@ func UnmarshalPartiallySignedTransaction(b []byte) (*PartiallySignedTransaction,
 	}, nil
 }
 
-func (psbt *PartiallySignedTransaction) SigHash(idx int) ([]byte, error) {
+func (psbt *PartiallySignedTransaction) SigHash(idx int) []byte {
 	tx := psbt.UnsignedTx
 	pin := psbt.Inputs[idx]
 	satoshi := pin.WitnessUtxo.Value
@@ -320,20 +320,9 @@ func (psbt *PartiallySignedTransaction) SigHash(idx int) ([]byte, error) {
 	tsh := txscript.NewTxSigHashes(tx, pof)
 	hash, err := txscript.CalcWitnessSigHash(pin.WitnessScript, tsh, SigHashType, tx, idx, satoshi)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	return hash, nil
-}
-
-func ValueDust(chain byte) (int64, error) {
-	switch chain {
-	case common.ChainBitcoin:
-		return 1000, nil
-	case common.ChainLitecoin:
-		return 10000, nil
-	default:
-		return 0, fmt.Errorf("invalid chain: %d", chain)
-	}
+	return hash
 }
 
 func MarshalWiredTransaction(msgTx *wire.MsgTx, encoding wire.MessageEncoding, chain byte) ([]byte, error) {
@@ -347,15 +336,4 @@ func MarshalWiredTransaction(msgTx *wire.MsgTx, encoding wire.MessageEncoding, c
 		return nil, fmt.Errorf("BtcEncode() => %v", err)
 	}
 	return rawBuffer.Bytes(), nil
-}
-
-func protocolVersion(chain byte) (uint32, error) {
-	switch chain {
-	case common.ChainBitcoin:
-		return wire.ProtocolVersion, nil
-	case common.ChainLitecoin:
-		return 70015, nil
-	default:
-		return 0, fmt.Errorf("invalid chain: %d", chain)
-	}
 }
