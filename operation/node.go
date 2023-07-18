@@ -7,7 +7,7 @@ import (
 
 	"github.com/MixinNetwork/go-safe-sdk/types"
 	"github.com/MixinNetwork/trusted-group/mtg"
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 )
 
 type MixinExtraPack struct {
