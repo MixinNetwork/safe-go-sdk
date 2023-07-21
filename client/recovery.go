@@ -7,15 +7,15 @@ import (
 )
 
 type Recovery struct {
-	ID        string `json:"id"`
-	Address   string `json:"address"`
-	Chain     int64  `json:"chain"`
-	PublicKey string `json:"public_key"`
-	Observer  string `json:"observer"`
-	Hash      string `json:"hash"`
-	Raw       string `json:"raw"`
-	State     string `json:"state"`
-	Error     any    `json:"error,omitempty"`
+	ID       string `json:"id"`
+	Address  string `json:"address"`
+	Chain    int64  `json:"chain"`
+	Holder   string `json:"holder"`
+	Observer string `json:"observer"`
+	Hash     string `json:"hash"`
+	Raw      string `json:"raw"`
+	State    string `json:"state"`
+	Error    any    `json:"error,omitempty"`
 }
 
 func ReadRecoveries(ctx context.Context) ([]*Recovery, error) {
