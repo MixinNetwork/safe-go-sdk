@@ -76,8 +76,8 @@ func ApproveTransaction(ctx context.Context, id string, chain int64, raw string)
 	return &body, nil
 }
 
-func RevokeTransaction(ctx context.Context, id string, chain int64, hash, signature string) error {
-	req := map[string]any{"chain": chain, "hash": hash, "signature": signature, "action": "revoke"}
+func RevokeTransaction(ctx context.Context, id string, chain int64, signature string) error {
+	req := map[string]any{"chain": chain, "signature": signature, "action": "revoke"}
 	reqBuf, err := json.Marshal(req)
 	if err != nil {
 		return err
