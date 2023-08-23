@@ -10,29 +10,24 @@ import (
 )
 
 var (
-	ProdHost       = "https://observer.mixin.one"
-	TestHost       = "https://safe.mixin.dev"
-	keyEnvironment = "env"
+	ProdHost = "https://observer.mixin.one"
+	TestHost = "https://safe.mixin.dev"
 
+	httpUri    string
 	httpClient *http.Client
 )
 
 func init() {
+	httpUri = ProdHost
 	httpClient = &http.Client{Timeout: 10 * time.Second}
 }
 
-func getHost(ctx context.Context) string {
-	host := ProdHost
-	env, _ := ctx.Value(keyEnvironment).(string)
-	if env != "prod" {
-		host = TestHost
-	}
-	return host
+func SetBaseUri(base string) {
+	httpUri = base
 }
 
 func Request(ctx context.Context, method, path string, body []byte) ([]byte, error) {
-	host := getHost(ctx)
-	req, err := http.NewRequest(method, host+path, bytes.NewReader(body))
+	req, err := http.NewRequest(method, httpUri+path, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
