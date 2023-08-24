@@ -10,17 +10,24 @@ import (
 )
 
 var (
-	DefaultHost = "https://safe.mixin.dev"
+	ProdHost = "https://observer.mixin.one"
+	TestHost = "https://safe.mixin.dev"
 
+	httpUri    string
 	httpClient *http.Client
 )
 
 func init() {
+	httpUri = ProdHost
 	httpClient = &http.Client{Timeout: 10 * time.Second}
 }
 
+func SetBaseUri(base string) {
+	httpUri = base
+}
+
 func Request(ctx context.Context, method, path string, body []byte) ([]byte, error) {
-	req, err := http.NewRequest(method, DefaultHost+path, bytes.NewReader(body))
+	req, err := http.NewRequest(method, httpUri+path, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
