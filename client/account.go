@@ -15,14 +15,15 @@ type Output struct {
 }
 
 type Account struct {
-	ID      string   `json:"id"`
-	Address string   `json:"address"`
-	Chain   int64    `json:"chain"`
-	Keys    []string `json:"keys"`
-	Outputs []Output `json:"outputs"`
-	Script  string   `json:"script"`
-	State   string   `json:"state"`
-	Error   any      `json:"error,omitempty"`
+	ID       string   `json:"id"`
+	Address  string   `json:"address"`
+	Chain    int64    `json:"chain"`
+	Keys     []string `json:"keys"`
+	Outputs  []Output `json:"outputs"`
+	Pendings []Output `json:"pendings"`
+	Script   string   `json:"script"`
+	State    string   `json:"state"`
+	Error    any      `json:"error,omitempty"`
 }
 
 func ReadAccount(ctx context.Context, id string) (*Account, error) {
