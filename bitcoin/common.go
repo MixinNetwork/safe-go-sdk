@@ -166,11 +166,7 @@ func IsInsufficientInputError(err error) bool {
 	return err != nil && strings.HasPrefix(err.Error(), "insufficient ")
 }
 
-func buildInsufficientInputError(cat string, inSatoshi, outSatoshi int64) error {
-	return fmt.Errorf("insufficient %s %d %d", cat, inSatoshi, outSatoshi)
-}
-
-func writeBytes(enc *common.Encoder, b []byte) {
+func WriteBytes(enc *common.Encoder, b []byte) {
 	enc.WriteInt(len(b))
 	enc.Write(b)
 }

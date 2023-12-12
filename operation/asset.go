@@ -117,7 +117,7 @@ func fetchAssetId(mixinId string) (string, error) {
 	return body.Data.AssetId, nil
 }
 
-func GetSafeBTCAssetId(chainId, holder string) (string, error) {
+func GetSafeBTCAssetId(chainId, holder, symbol, name string) (string, error) {
 	switch chainId {
 	case SafeBitcoinChainId:
 		addr := GetFactoryAssetAddress(chainId, "BTC", "Bitcoin", holder)
@@ -135,7 +135,18 @@ func GetSafeBTCAssetId(chainId, holder string) (string, error) {
 			return "", err
 		}
 		return bondId, nil
+	case SafeEthereumChainId, SafeMVMChainId:
+		if name == "" || symbol == "" {
+			return "", fmt.Errorf("invalid asset symbol %s or name %s", symbol, name)
+		}
+		addr := GetFactoryAssetAddress(chainId, symbol, name, holder)
+		assetKey := strings.ToLower(addr.String())
+		bondId, err := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
+		if err != nil {
+			return "", err
+		}
+		return bondId, nil
 	default:
-		return "", fmt.Errorf("Unsupported Chain Id %s", chainId)
+		return "", fmt.Errorf("unsupported Chain Id %s", chainId)
 	}
 }
