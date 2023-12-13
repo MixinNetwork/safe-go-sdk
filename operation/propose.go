@@ -97,7 +97,7 @@ func ProposeTransaction(operationId, publicKey string, typ byte, head, destinati
 		return nil, fmt.Errorf("invalid chain: %d", chain)
 	}
 	switch chain {
-	case CurveSecp256k1ECDSAEthereum, CurveSecp256k1ECDSAMVM:
+	case SafeChainEthereum, SafeChainMVM:
 		if assetId == "" {
 			return nil, fmt.Errorf("invalid asset_id %s for chain %d", assetId, chain)
 		}
