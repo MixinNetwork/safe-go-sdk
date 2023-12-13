@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.21.0
 
 require (
-	github.com/MixinNetwork/mixin v0.16.11-0.20231101065608-f985c46ce215
+	github.com/MixinNetwork/mixin v0.16.10
 	github.com/MixinNetwork/trusted-group v0.6.0
 	github.com/btcsuite/btcd v0.23.4
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
