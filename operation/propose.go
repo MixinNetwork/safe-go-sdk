@@ -41,16 +41,16 @@ const (
 func ProposeAccount(operationId, publicKey string, owners []string, threshold, chain byte, timeLock uint16) (*types.Operation, error) {
 	var action, curve uint8
 	switch chain {
-	case CurveSecp256k1ECDSABitcoin:
+	case SafeChainBitcoin:
 		action = ActionBitcoinSafeProposeAccount
 		curve = CurveSecp256k1ECDSABitcoin
-	case CurveSecp256k1ECDSALitecoin:
+	case SafeChainLitecoin:
 		action = ActionBitcoinSafeProposeAccount
 		curve = CurveSecp256k1ECDSALitecoin
-	case CurveSecp256k1ECDSAEthereum:
+	case SafeChainEthereum:
 		action = ActionEthereumSafeProposeAccount
 		curve = CurveSecp256k1ECDSAEthereum
-	case CurveSecp256k1ECDSAMVM:
+	case SafeChainMVM:
 		action = ActionEthereumSafeProposeAccount
 		curve = CurveSecp256k1ECDSAMVM
 	default:
@@ -81,16 +81,16 @@ func ProposeAccount(operationId, publicKey string, owners []string, threshold, c
 func ProposeTransaction(operationId, publicKey string, typ byte, head, destination string, chain byte, assetId string) (*types.Operation, error) {
 	var action, curve uint8
 	switch chain {
-	case CurveSecp256k1ECDSABitcoin:
+	case SafeChainBitcoin:
 		action = ActionBitcoinSafeProposeTransaction
 		curve = CurveSecp256k1ECDSABitcoin
-	case CurveSecp256k1ECDSALitecoin:
+	case SafeChainLitecoin:
 		action = ActionBitcoinSafeProposeTransaction
 		curve = CurveSecp256k1ECDSALitecoin
-	case CurveSecp256k1ECDSAEthereum:
+	case SafeChainEthereum:
 		action = ActionEthereumSafeProposeTransaction
 		curve = CurveSecp256k1ECDSAEthereum
-	case CurveSecp256k1ECDSAMVM:
+	case SafeChainMVM:
 		action = ActionEthereumSafeProposeTransaction
 		curve = CurveSecp256k1ECDSAMVM
 	default:
