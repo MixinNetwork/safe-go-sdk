@@ -14,16 +14,23 @@ type Output struct {
 	Sequence        uint32 `json:"sequence"`
 }
 
+type AssetBalance struct {
+	AssetAddress string `json:"asset_address"`
+	Amount       string `json:"amount"`
+}
+
 type Account struct {
-	ID       string   `json:"id"`
-	Address  string   `json:"address"`
-	Chain    int64    `json:"chain"`
-	Keys     []string `json:"keys"`
-	Outputs  []Output `json:"outputs"`
-	Pendings []Output `json:"pendings"`
-	Script   string   `json:"script"`
-	State    string   `json:"state"`
-	Error    any      `json:"error,omitempty"`
+	ID              string                  `json:"id"`
+	Address         string                  `json:"address"`
+	Chain           int64                   `json:"chain"`
+	Keys            []string                `json:"keys"`
+	Outputs         []Output                `json:"outputs"`        // For bitcoin, litecoin
+	Pendings        []Output                `json:"pendings"`       // For bitcoin, litecoin
+	Balances        map[string]AssetBalance `json:"balances"`       // For evm chains
+	PendingBalances map[string]AssetBalance `json:"pendingbalance"` // For evm chains
+	Script          string                  `json:"script"`
+	State           string                  `json:"state"`
+	Error           any                     `json:"error,omitempty"`
 }
 
 func ReadAccount(ctx context.Context, id string) (*Account, error) {
