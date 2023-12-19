@@ -120,33 +120,21 @@ func fetchAssetId(mixinId string) (string, error) {
 func GetSafeBTCAssetId(chainId, holder, symbol, name string) (string, error) {
 	switch chainId {
 	case SafeBitcoinChainId:
-		addr := GetFactoryAssetAddress(chainId, "BTC", "Bitcoin", holder)
-		assetKey := strings.ToLower(addr.String())
-		bondId, err := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
-		if err != nil {
-			return "", err
-		}
-		return bondId, nil
+		symbol, name = "BTC", "Bitcoin"
 	case SafeLitecoinChainId:
-		addr := GetFactoryAssetAddress(chainId, "LTC", "Litecoin", holder)
-		assetKey := strings.ToLower(addr.String())
-		bondId, err := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
-		if err != nil {
-			return "", err
-		}
-		return bondId, nil
+		symbol, name = "LTC", "Litecoin"
 	case SafeEthereumChainId, SafeMVMChainId:
+		symbol, name = "ETH", "Ether"
+	default:
 		if name == "" || symbol == "" {
 			return "", fmt.Errorf("invalid asset symbol %s or name %s", symbol, name)
 		}
-		addr := GetFactoryAssetAddress(chainId, symbol, name, holder)
-		assetKey := strings.ToLower(addr.String())
-		bondId, err := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
-		if err != nil {
-			return "", err
-		}
-		return bondId, nil
-	default:
-		return "", fmt.Errorf("unsupported Chain Id %s", chainId)
 	}
+	addr := GetFactoryAssetAddress(chainId, symbol, name, holder)
+	assetKey := strings.ToLower(addr.String())
+	bondId, err := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
+	if err != nil {
+		return "", err
+	}
+	return bondId, nil
 }
