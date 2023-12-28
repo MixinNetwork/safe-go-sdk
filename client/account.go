@@ -28,6 +28,7 @@ type Account struct {
 	Pendings        []Output                `json:"pendings"`       // For bitcoin, litecoin
 	Balances        map[string]AssetBalance `json:"balances"`       // For evm chains
 	PendingBalances map[string]AssetBalance `json:"pendingbalance"` // For evm chains
+	Nonce           int64                   `json:"nonce"`          // For evm chains
 	Script          string                  `json:"script"`
 	State           string                  `json:"state"`
 	Error           any                     `json:"error,omitempty"`
