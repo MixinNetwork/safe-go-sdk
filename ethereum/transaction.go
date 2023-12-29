@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -451,6 +452,30 @@ func GetMetaTxData(to common.Address, amount *big.Int, data []byte) []byte {
 	meta = append(meta, common.LeftPadBytes(dataLen.Bytes(), 32)...)
 	meta = append(meta, data...)
 	return meta
+}
+
+func SignTx(rawStr, privateStr string) (string, error) {
+	rawb, err := hex.DecodeString(rawStr)
+	if err != nil {
+		rawb, err = base64.RawURLEncoding.DecodeString(rawStr)
+		if err != nil {
+			return "", err
+		}
+	}
+	st, err := UnmarshalSafeTransaction(rawb)
+	if err != nil {
+		return "", err
+	}
+	private, err := crypto.HexToECDSA(privateStr)
+	if err != nil {
+		return "", err
+	}
+	sig, err := crypto.Sign(st.Message, private)
+	if err != nil {
+		return "", err
+	}
+	sig = ProcessSignature(sig)
+	return hex.EncodeToString(sig), nil
 }
 
 func ProcessSignature(signature []byte) []byte {
