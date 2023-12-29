@@ -334,6 +334,20 @@ func guardInit(rpc string) (*ethclient.Client, *abi.MixinSafeGuard, error) {
 	return conn, abi, nil
 }
 
+func safeInit(rpc, address string) (*ethclient.Client, *abi.GnosisSafe, error) {
+	conn, err := ethclient.Dial(rpc)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	abi, err := abi.NewGnosisSafe(common.HexToAddress(address), conn)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return conn, abi, nil
+}
+
 func toBytes32(b []byte) [32]byte {
 	var b32 [32]byte
 	copy(b32[:], b[:32])

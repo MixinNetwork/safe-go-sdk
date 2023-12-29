@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/btcsuite/btcd/btcutil/hdkeychain"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -23,6 +24,20 @@ func GetSafeLastTxTime(rpc, address string) (time.Time, error) {
 	}
 	t := time.Unix(timestamp.Int64(), 0)
 	return t, nil
+}
+
+func GetOwners(rpc, address string) ([]common.Address, error) {
+	conn, abi, err := safeInit(rpc, address)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	os, err := abi.GetOwners(nil)
+	if err != nil {
+		return nil, err
+	}
+	return os, nil
 }
 
 func VerifyHolderKey(public string) error {
@@ -55,6 +70,20 @@ func ParseEthereumCompressedPublicKey(public string) (*common.Address, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	publicKey, err := crypto.DecompressPubkey(pub)
+	if err != nil {
+		return nil, err
+	}
+
+	addr := crypto.PubkeyToAddress(*publicKey)
+	return &addr, nil
+}
+
+func ParseEthereumUncompressedPublicKey(public string) (*common.Address, error) {
+	xPub, _ := hdkeychain.NewKeyFromString(public)
+	ecPub, _ := xPub.ECPubKey()
+	pub := ecPub.SerializeCompressed()
 
 	publicKey, err := crypto.DecompressPubkey(pub)
 	if err != nil {
