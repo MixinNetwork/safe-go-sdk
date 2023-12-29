@@ -2,7 +2,6 @@ package ethereum
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -81,10 +80,6 @@ func CreateTransaction(ctx context.Context, typ int, chainID int64, id, safeAddr
 	}
 	switch typ {
 	case TypeETHTx:
-	case TypeInitGuardTx:
-		tx.Destination = common.HexToAddress(safeAddress)
-		tx.Value = big.NewInt(0)
-		tx.Data = GetEnableGuradData(EthereumSafeGuardAddress)
 	case TypeERC20Tx:
 		norm := NormalizeAddress(tokenAddress)
 		if norm == "" {
@@ -120,6 +115,31 @@ func CreateMultiSendTransaction(ctx context.Context, chainID int64, id, safeAddr
 		Nonce:          nonce,
 		Signatures:     make([][]byte, 3),
 	}
+	tx.Message = tx.GetTransactionHash()
+	tx.TxHash = tx.Hash(id)
+	return tx, nil
+}
+
+func CreateEnableGuardTransaction(ctx context.Context, chainID int64, id, safeAddress, observerAddress string, timelock *big.Int) (*SafeTransaction, error) {
+	if timelock == nil {
+		return nil, fmt.Errorf("invalid timelock: %d", timelock)
+	}
+	zero := big.NewInt(0)
+	tx := &SafeTransaction{
+		ChainID:        chainID,
+		SafeAddress:    safeAddress,
+		Destination:    common.HexToAddress(EthereumMultiSendAddress),
+		Value:          zero,
+		Operation:      operationTypeDelegateCall,
+		SafeTxGas:      zero,
+		BaseGas:        zero,
+		GasPrice:       zero,
+		GasToken:       common.HexToAddress(EthereumEmptyAddress),
+		RefundReceiver: common.HexToAddress(EthereumEmptyAddress),
+		Nonce:          zero,
+		Signatures:     make([][]byte, 3),
+	}
+	tx.Data = tx.GetEnableGuradData(observerAddress, timelock)
 	tx.Message = tx.GetTransactionHash()
 	tx.TxHash = tx.Hash(id)
 	return tx, nil
@@ -229,87 +249,6 @@ func UnmarshalSafeTransaction(b []byte) (*SafeTransaction, error) {
 	}, nil
 }
 
-func (tx *SafeTransaction) ValidTransaction(rpc string) (bool, error) {
-	conn, abi, err := safeInit(rpc, tx.SafeAddress)
-	if err != nil {
-		return false, err
-	}
-	defer conn.Close()
-
-	var signature []byte
-	count := 0
-	for _, sig := range tx.Signatures {
-		if sig == nil {
-			continue
-		}
-		signature = append(signature, sig...)
-		count += 1
-	}
-	if count < 2 {
-		return false, fmt.Errorf("SafeTransaction has insufficient signatures")
-	}
-
-	isValid, err := abi.ValidTransaction(
-		tx.Destination,
-		tx.Value,
-		tx.Data,
-		tx.Operation,
-		tx.SafeTxGas,
-		tx.BaseGas,
-		tx.GasPrice,
-		tx.GasToken,
-		tx.RefundReceiver,
-		signature,
-	)
-	if err != nil {
-		return false, err
-	}
-	return isValid, nil
-}
-
-func (tx *SafeTransaction) ExecTransaction(rpc, key string) (string, error) {
-	signer, err := signerInit(key, tx.ChainID)
-	if err != nil {
-		return "", err
-	}
-	conn, safeAbi, err := safeInit(rpc, tx.SafeAddress)
-	if err != nil {
-		return "", err
-	}
-	defer conn.Close()
-
-	var signature []byte
-	count := 0
-	for _, sig := range tx.Signatures {
-		if sig == nil {
-			continue
-		}
-		signature = append(signature, sig...)
-		count += 1
-	}
-	if count < 2 {
-		return "", fmt.Errorf("SafeTransaction has insufficient signatures")
-	}
-
-	txResponse, err := safeAbi.ExecTransaction(
-		signer,
-		tx.Destination,
-		tx.Value,
-		tx.Data,
-		tx.Operation,
-		tx.SafeTxGas,
-		tx.BaseGas,
-		tx.GasPrice,
-		tx.GasToken,
-		tx.RefundReceiver,
-		signature,
-	)
-	if err != nil {
-		return "", err
-	}
-	return txResponse.Hash().Hex(), nil
-}
-
 func (tx *SafeTransaction) ExtractOutputs() []*Output {
 	outputs, err := tx.ParseMultiSendData()
 	if err == nil {
@@ -322,7 +261,8 @@ func (tx *SafeTransaction) ExtractOutputs() []*Output {
 			Amount:      tx.Value,
 		}}
 	default:
-		if hex.EncodeToString(tx.Data[0:4]) != "a9059cbb" || len(tx.Data) != 68 {
+		method := hex.EncodeToString(tx.Data[0:4])
+		if method != "a9059cbb" || len(tx.Data) != 68 {
 			panic("invalid safe transaction data")
 		}
 		destination := tx.Data[4:36]
@@ -390,32 +330,66 @@ func (tx *SafeTransaction) ParseMultiSendData() ([]*Output, error) {
 		case int(dataLen) == 68:
 			metaData := multiSendData[offset : offset+int(dataLen)]
 			strData := hex.EncodeToString(metaData)
-			if !strings.HasPrefix(strData, "a9059cbb") {
+			method := strData[0:8]
+			switch method {
+			case "59335aa2": // guardSafe
+				offset += int(dataLen)
+			case "a9059cbb": // erc20 transfer
+				bytesTo := metaData[4:36]
+				bytesAmount := metaData[36:68]
+				o.TokenAddress = o.Destination
+				o.Destination = common.BytesToAddress(bytesTo).Hex()
+				o.Amount = new(big.Int).SetBytes(bytesAmount)
+				offset += int(dataLen)
+			default:
 				return nil, fmt.Errorf("invalid meta tx data: %x", metaData)
 			}
-			bytesTo := metaData[4:36]
-			bytesAmount := metaData[36:68]
-			o.TokenAddress = o.Destination
-			o.Destination = common.BytesToAddress(bytesTo).Hex()
-			o.Amount = new(big.Int).SetBytes(bytesAmount)
-			offset += int(dataLen)
 		default:
-			return nil, fmt.Errorf("invalid meta tx data len: %d", dataLen)
+			offset += int(dataLen)
 		}
 		os = append(os, o)
 	}
 	return os, nil
 }
 
-func GetEnableGuradData(address string) []byte {
+func (tx *SafeTransaction) GetEnableGuradData(observer string, timelock *big.Int) []byte {
 	safeAbi, err := ga.JSON(strings.NewReader(abi.GnosisSafeMetaData.ABI))
 	if err != nil {
 		panic(err)
 	}
-
 	args, err := safeAbi.Pack(
 		"setGuard",
-		common.HexToAddress(address),
+		common.HexToAddress(EthereumSafeGuardAddress),
+	)
+	if err != nil {
+		panic(err)
+	}
+	setGuardData := GetMetaTxData(common.HexToAddress(tx.SafeAddress), big.NewInt(0), args)
+
+	guardAbi, err := ga.JSON(strings.NewReader(abi.MixinSafeGuardMetaData.ABI))
+	if err != nil {
+		panic(err)
+	}
+	args, err = guardAbi.Pack(
+		"guardSafe",
+		common.HexToAddress(observer),
+		timelock,
+	)
+	if err != nil {
+		panic(err)
+	}
+	guardSafeData := GetMetaTxData(common.HexToAddress(EthereumSafeGuardAddress), big.NewInt(0), args)
+
+	data := []byte{}
+	data = append(data, setGuardData...)
+	data = append(data, guardSafeData...)
+	abi, err := ga.JSON(strings.NewReader(abi.MultiSendMetaData.ABI))
+	if err != nil {
+		panic(err)
+	}
+	args, err = abi.Pack(
+		"multiSend",
+		data,
 	)
 	if err != nil {
 		panic(err)
@@ -477,30 +451,6 @@ func GetMetaTxData(to common.Address, amount *big.Int, data []byte) []byte {
 	meta = append(meta, common.LeftPadBytes(dataLen.Bytes(), 32)...)
 	meta = append(meta, data...)
 	return meta
-}
-
-func SignTx(rawStr, privateStr string) (string, error) {
-	rawb, err := hex.DecodeString(rawStr)
-	if err != nil {
-		rawb, err = base64.RawURLEncoding.DecodeString(rawStr)
-		if err != nil {
-			return "", err
-		}
-	}
-	st, err := UnmarshalSafeTransaction(rawb)
-	if err != nil {
-		return "", err
-	}
-	private, err := crypto.HexToECDSA(privateStr)
-	if err != nil {
-		return "", err
-	}
-	sig, err := crypto.Sign(st.Message, private)
-	if err != nil {
-		return "", err
-	}
-	sig = ProcessSignature(sig)
-	return base64.RawURLEncoding.EncodeToString(sig), nil
 }
 
 func ProcessSignature(signature []byte) []byte {

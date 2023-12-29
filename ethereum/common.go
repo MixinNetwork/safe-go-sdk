@@ -1,7 +1,6 @@
 package ethereum
 
 import (
-	"crypto/ecdsa"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/MixinNetwork/go-safe-sdk/ethereum/abi"
 	ga "github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -35,7 +33,6 @@ const (
 	operationTypeCall         = 0
 	operationTypeDelegateCall = 1
 
-	TypeInitGuardTx = 0
 	TypeETHTx       = 1
 	TypeERC20Tx     = 2
 	TypeMultiSendTx = 3
@@ -45,7 +42,7 @@ const (
 	EthereumSafeL2Address                       = "0x9eA0fCa659336872d47dF0FbE21575BeE1a56eff"
 	EthereumCompatibilityFallbackHandlerAddress = "0x52Bb11433e9C993Cc320B659bdd3F0699AEa678d"
 	EthereumMultiSendAddress                    = "0x22a4Ac16965F7C5446A28E3aaA91D06409bF5637"
-	EthereumSafeGuardAddress                    = "0xD312393D540b0A91947b021d85652371249D58C4"
+	EthereumSafeGuardAddress                    = "0x2409439756fc06A9553dFb78C69ba37C24e5c3B7"
 
 	predeterminedSaltNonce  = "0xb1073742015cbcf5a3a4d9d1ae33ecf619439710b89475f92e2abd2117e90f90"
 	accountContractCode     = "0x608060405234801561001057600080fd5b506040516101e63803806101e68339818101604052602081101561003357600080fd5b8101908080519060200190929190505050600073ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1614156100ca576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260228152602001806101c46022913960400191505060405180910390fd5b806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505060ab806101196000396000f3fe608060405273ffffffffffffffffffffffffffffffffffffffff600054167fa619486e0000000000000000000000000000000000000000000000000000000060003514156050578060005260206000f35b3660008037600080366000845af43d6000803e60008114156070573d6000fd5b3d6000f3fea264697066735822122003d1488ee65e08fa41e58e888a9865554c535f2c77126a82cb4c0f917f31441364736f6c63430007060033496e76616c69642073696e676c65746f6e20616464726573732070726f7669646564"
@@ -125,69 +122,6 @@ func HashMessageForSignature(msg string) ([]byte, error) {
 	}
 	hash := crypto.Keccak256Hash([]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(b), b)))
 	return hash.Bytes(), nil
-}
-
-func LoopBlockTraces(chain byte, chainId string, traces []*RPCBlockCallTrace, txs []string) []*Transfer {
-	if len(txs) != len(traces) {
-		panic(len(txs))
-	}
-
-	var transfers []*Transfer
-	for i, t := range traces {
-		txTransfers := LoopCalls(chain, chainId, t.Result, 0, 0)
-		hash := txs[i]
-		for _, tTransfer := range txTransfers {
-			tTransfer.Hash = hash
-			tTransfer.Sender = t.Result.From
-			transfers = append(transfers, tTransfer)
-		}
-	}
-	return transfers
-}
-
-func LoopCalls(chain byte, chainId string, trace *RPCTransactionCallTrace, layer, index int) []*Transfer {
-	depositIndex := int64(layer*10 + index)
-
-	var transfers []*Transfer
-	switch {
-	case trace.Error != "" || trace.Type == "STATICCALL":
-		return transfers
-	case trace.Value != "" && trace.Input == "0x": // ETH transfer
-		value, _ := new(big.Int).SetString(trace.Value[2:], 16)
-		to := common.HexToAddress(trace.To)
-		if value.Cmp(big.NewInt(0)) > 0 {
-			transfers = append(transfers, &Transfer{
-				Index:        depositIndex,
-				Value:        value,
-				Receiver:     to.Hex(),
-				TokenAddress: EthereumEmptyAddress,
-				AssetId:      chainId,
-			})
-		}
-	case strings.HasPrefix(trace.Input, "0xa9059cbb"): // ERC20 transfer(address,uint256)
-		input := trace.Input[10:]
-		to := common.HexToAddress(input[0:64]).Hex()
-		value, _ := new(big.Int).SetString(input[64:128], 16)
-		tokenAddress := trace.To
-		assetId := GenerateAssetId(chain, tokenAddress)
-		if value.Cmp(big.NewInt(0)) > 0 {
-			transfers = append(transfers, &Transfer{
-				Index:        depositIndex,
-				Value:        value,
-				Receiver:     to,
-				TokenAddress: tokenAddress,
-				AssetId:      assetId,
-			})
-		}
-	}
-
-	for i, c := range trace.Calls {
-		ts := LoopCalls(chain, chainId, c, layer+1, i)
-		for _, t := range ts {
-			transfers = append(transfers, t)
-		}
-	}
-	return transfers
 }
 
 func ParseAmount(amount string, decimals int32) *big.Int {
@@ -272,89 +206,6 @@ func NormalizeAddress(addr string) string {
 		return ""
 	}
 	return norm
-}
-
-func PrivToAddress(priv string) (*common.Address, error) {
-	privateKey, err := crypto.HexToECDSA(priv)
-	if err != nil {
-		return nil, err
-	}
-
-	publicKey := privateKey.Public()
-	publicKeyECDSA, _ := publicKey.(*ecdsa.PublicKey)
-
-	addr := crypto.PubkeyToAddress(*publicKeyECDSA)
-	return &addr, nil
-}
-
-func packSetupArguments(ownersAddrs []string, threshold int64, data []byte, to, fallbackHandler, paymentToken, paymentReceiver common.Address, payment *big.Int) []byte {
-	safeAbi, err := ga.JSON(strings.NewReader(abi.GnosisSafeMetaData.ABI))
-	if err != nil {
-		panic(err)
-	}
-
-	var owners []common.Address
-	for _, a := range ownersAddrs {
-		owners = append(owners, common.HexToAddress(a))
-	}
-
-	args, err := safeAbi.Pack(
-		"setup",
-		owners,
-		big.NewInt(threshold),
-		to,
-		data,
-		fallbackHandler,
-		paymentToken,
-		payment,
-		paymentReceiver,
-	)
-	if err != nil {
-		panic(err)
-	}
-	return args
-}
-
-func packSafeArguments(address string) []byte {
-	addressTy, err := ga.NewType("address", "", nil)
-	if err != nil {
-		panic(err)
-	}
-
-	arguments := ga.Arguments{
-		{
-			Type: addressTy,
-		},
-	}
-
-	args, err := arguments.Pack(
-		common.HexToAddress(address),
-	)
-	if err != nil {
-		panic(err)
-	}
-	return args
-}
-
-func packSaltArguments(salt *big.Int) []byte {
-	uint256Ty, err := ga.NewType("uint256", "", nil)
-	if err != nil {
-		panic(err)
-	}
-
-	arguments := ga.Arguments{
-		{
-			Type: uint256Ty,
-		},
-	}
-
-	args, err := arguments.Pack(
-		salt,
-	)
-	if err != nil {
-		panic(err)
-	}
-	return args
 }
 
 func packSafeTransactionArguments(tx *SafeTransaction) []byte {
@@ -467,43 +318,6 @@ func packDomainSeparatorArguments(chainID int64, safeAddress string) []byte {
 		panic(err)
 	}
 	return args
-}
-
-func signerInit(key string, evmChainId int64) (*bind.TransactOpts, error) {
-	chainId := new(big.Int).SetInt64(evmChainId)
-	priv, err := crypto.HexToECDSA(key)
-	if err != nil {
-		return nil, err
-	}
-	return bind.NewKeyedTransactorWithChainID(priv, chainId)
-}
-
-func safeInit(rpc, address string) (*ethclient.Client, *abi.GnosisSafe, error) {
-	conn, err := ethclient.Dial(rpc)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	abi, err := abi.NewGnosisSafe(common.HexToAddress(address), conn)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return conn, abi, nil
-}
-
-func factoryInit(rpc string) (*ethclient.Client, *abi.ProxyFactory, error) {
-	conn, err := ethclient.Dial(rpc)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	abi, err := abi.NewProxyFactory(common.HexToAddress(EthereumSafeProxyFactoryAddress), conn)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return conn, abi, nil
 }
 
 func guardInit(rpc string) (*ethclient.Client, *abi.MixinSafeGuard, error) {
