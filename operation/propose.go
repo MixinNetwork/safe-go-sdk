@@ -78,7 +78,7 @@ func ProposeAccount(operationId, publicKey string, owners []string, threshold, c
 	return &op, nil
 }
 
-func ProposeTransaction(operationId, publicKey string, typ byte, head, destination string, chain byte, assetId string) (*types.Operation, error) {
+func ProposeTransaction(operationId, publicKey string, typ byte, head, destination string, chain byte) (*types.Operation, error) {
 	var action, curve uint8
 	switch chain {
 	case SafeChainBitcoin:
@@ -95,12 +95,6 @@ func ProposeTransaction(operationId, publicKey string, typ byte, head, destinati
 		curve = CurveSecp256k1ECDSAMVM
 	default:
 		return nil, fmt.Errorf("invalid chain: %d", chain)
-	}
-	switch chain {
-	case SafeChainEthereum, SafeChainMVM:
-		if assetId == "" {
-			return nil, fmt.Errorf("invalid asset_id %s for chain %d", assetId, chain)
-		}
 	}
 
 	extra := []byte{typ}
