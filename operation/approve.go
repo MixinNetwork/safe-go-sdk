@@ -26,7 +26,7 @@ func SignSafeMessage(msg, priv string, chain byte) (string, error) {
 		private, _ := btcec.PrivKeyFromBytes(b)
 		sig := ecdsa.Sign(private, hash)
 		return base64.RawURLEncoding.EncodeToString(sig.Serialize()), nil
-	case SafeChainEthereum, SafeChainMVM:
+	case SafeChainEthereum, SafeChainMVM, SafeChainPolygon:
 		hash, err := HashMessageForSignature(msg, chain)
 		if err != nil {
 			return "", err
@@ -50,7 +50,7 @@ func VerifySafeMessage(public string, msg, sig []byte, chain byte) error {
 	switch chain {
 	case SafeChainBitcoin, SafeChainLitecoin:
 		return bitcoin.VerifySignatureDER(public, msg, sig)
-	case SafeChainEthereum, SafeChainMVM:
+	case SafeChainEthereum, SafeChainMVM, SafeChainPolygon:
 		return ethereum.VerifyMessageSignature(public, msg, sig)
 	default:
 		return fmt.Errorf("invalid chain: %d", chain)

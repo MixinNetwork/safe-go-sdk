@@ -16,6 +16,7 @@ const (
 	CurveSecp256k1ECDSAEthereum = 2
 	CurveSecp256k1ECDSALitecoin = 100 + CurveSecp256k1ECDSABitcoin
 	CurveSecp256k1ECDSAMVM      = 100 + CurveSecp256k1ECDSAEthereum
+	CurveSecp256k1ECDSAPolygon  = 110 + CurveSecp256k1ECDSAEthereum
 
 	// For all Bitcoin like chains
 	ActionBitcoinSafeProposeAccount     = 110
@@ -53,6 +54,9 @@ func ProposeAccount(operationId, publicKey string, owners []string, threshold, c
 	case SafeChainMVM:
 		action = ActionEthereumSafeProposeAccount
 		curve = CurveSecp256k1ECDSAMVM
+	case SafeChainPolygon:
+		action = ActionEthereumSafeProposeAccount
+		curve = CurveSecp256k1ECDSAPolygon
 	default:
 		return nil, fmt.Errorf("invalid chain: %d", chain)
 	}
@@ -93,6 +97,9 @@ func ProposeTransaction(operationId, publicKey string, typ byte, head, destinati
 	case SafeChainMVM:
 		action = ActionEthereumSafeProposeTransaction
 		curve = CurveSecp256k1ECDSAMVM
+	case SafeChainPolygon:
+		action = ActionEthereumSafeProposeTransaction
+		curve = CurveSecp256k1ECDSAPolygon
 	default:
 		return nil, fmt.Errorf("invalid chain: %d", chain)
 	}

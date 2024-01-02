@@ -21,6 +21,7 @@ import (
 const (
 	ChainEthereum = 2
 	ChainMVM      = 4
+	ChainPolygon  = 6
 
 	TransactionConfirmations = 1
 
@@ -146,6 +147,8 @@ func GetEvmChainID(chain int64) int64 {
 	switch chain {
 	case ChainEthereum:
 		return 1
+	case ChainPolygon:
+		return 137
 	case ChainMVM:
 		return 73927
 	default:
@@ -157,6 +160,8 @@ func GetMixinChainID(chain int64) string {
 	switch chain {
 	case ChainEthereum:
 		return "43d61dcd-e413-450d-80b8-101d5e903357"
+	case ChainPolygon:
+		return "b7938396-3f94-4e0a-9179-d3440718156f"
 	case ChainMVM:
 		return "a0ffd769-5850-4b48-9651-d2ae44a3e64d"
 	default:

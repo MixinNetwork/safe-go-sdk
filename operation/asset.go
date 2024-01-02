@@ -25,15 +25,17 @@ const (
 	ProdFactoryContractAddress = "0x3c763e46456915922a4647a1E3f3B8916c93171e"
 
 	SafeChainBitcoin  = 1
-	SafeChainLitecoin = 5
 	SafeChainEthereum = 2
 	SafeChainMixin    = 3
 	SafeChainMVM      = 4
+	SafeChainLitecoin = 5
+	SafeChainPolygon  = 6
 
 	SafeBitcoinChainId  = "c6d0c728-2624-429b-8e0d-d9d19b6592fa"
 	SafeLitecoinChainId = "76c802a2-7c88-447f-a93e-c29c9e5dd9c8"
 	SafeEthereumChainId = "43d61dcd-e413-450d-80b8-101d5e903357"
 	SafeMVMChainId      = "a0ffd769-5850-4b48-9651-d2ae44a3e64d"
+	SafePolygonChainId  = "b7938396-3f94-4e0a-9179-d3440718156f"
 )
 
 var (
@@ -125,6 +127,8 @@ func GetSafeBTCAssetId(chainId, holder, symbol, name string) (string, error) {
 		symbol, name = "LTC", "Litecoin"
 	case SafeEthereumChainId, SafeMVMChainId:
 		symbol, name = "ETH", "Ether"
+	case SafePolygonChainId:
+		symbol, name = "MATIC", "Polygon"
 	default:
 		if name == "" || symbol == "" {
 			return "", fmt.Errorf("invalid asset symbol %s or name %s", symbol, name)
