@@ -501,3 +501,45 @@ func CheckTransactionPartiallySignedBy(raw, public string) bool {
 	}
 	return false
 }
+
+func CheckTransactionSignature(raw, public string, signature []byte) (bool, error) {
+	b, err := hex.DecodeString(raw)
+	if err != nil {
+		return false, err
+	}
+	st, err := UnmarshalSafeTransaction(b)
+	if err != nil {
+		return false, err
+	}
+	err = VerifyMessageSignature(public, st.Message, signature)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func AddSignature(rpc, raw, public string, sig []byte) (string, error) {
+	b, err := hex.DecodeString(raw)
+	if err != nil {
+		return "", err
+	}
+	st, err := UnmarshalSafeTransaction(b)
+	if err != nil {
+		return "", err
+	}
+	os, err := GetOwners(rpc, st.SafeAddress)
+	if err != nil {
+		return "", err
+	}
+	addr, err := ParseEthereumCompressedPublicKey(public)
+	if err != nil {
+		return "", err
+	}
+	for i, o := range os {
+		if o.Cmp(*addr) == 0 {
+			st.Signatures[i] = sig
+		}
+	}
+	raw = hex.EncodeToString(st.Marshal())
+	return raw, nil
+}
