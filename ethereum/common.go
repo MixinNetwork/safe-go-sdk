@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"crypto/ecdsa"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -207,10 +208,23 @@ func FetchAsset(chain byte, rpc, address string) (*Asset, error) {
 
 func NormalizeAddress(addr string) string {
 	norm := common.HexToAddress(addr).Hex()
-	if norm == EthereumEmptyAddress || strings.ToLower(norm) != strings.ToLower(addr) {
+	if norm == EthereumEmptyAddress || strings.EqualFold(norm, addr) {
 		return ""
 	}
 	return norm
+}
+
+func PrivToAddress(priv string) (*common.Address, error) {
+	privateKey, err := crypto.HexToECDSA(priv)
+	if err != nil {
+		return nil, err
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, _ := publicKey.(*ecdsa.PublicKey)
+
+	addr := crypto.PubkeyToAddress(*publicKeyECDSA)
+	return &addr, nil
 }
 
 func packSafeTransactionArguments(tx *SafeTransaction) []byte {
