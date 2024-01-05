@@ -119,8 +119,7 @@ func fetchAssetId(mixinId string) (string, error) {
 	return body.Data.AssetId, nil
 }
 
-func GetSafeBTCAssetId(chainId, holder string) (string, error) {
-	var symbol, name string
+func GetSafeBTCAssetId(chainId, holder, symbol, name string) (string, error) {
 	switch chainId {
 	case SafeBitcoinChainId:
 		symbol, name = "BTC", "Bitcoin"
