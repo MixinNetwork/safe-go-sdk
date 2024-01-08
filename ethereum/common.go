@@ -208,7 +208,7 @@ func FetchAsset(chain byte, rpc, address string) (*Asset, error) {
 
 func NormalizeAddress(addr string) string {
 	norm := common.HexToAddress(addr).Hex()
-	if norm == EthereumEmptyAddress || strings.EqualFold(norm, addr) {
+	if norm == EthereumEmptyAddress || !strings.EqualFold(norm, addr) {
 		return ""
 	}
 	return norm
