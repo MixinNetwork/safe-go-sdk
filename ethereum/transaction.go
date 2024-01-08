@@ -470,7 +470,11 @@ func SignTx(rawStr, privateStr string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	sig, err := crypto.Sign(st.Message, private)
+	hash, err := HashMessageForSignature(hex.EncodeToString(st.Message))
+	if err != nil {
+		return "", err
+	}
+	sig, err := crypto.Sign(hash, private)
 	if err != nil {
 		return "", err
 	}
