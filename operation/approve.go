@@ -40,7 +40,7 @@ func SignSafeMessage(msg, priv string, chain byte) (string, error) {
 			return "", err
 		}
 		sig = ethereum.ProcessSignature(sig)
-		return base64.RawURLEncoding.EncodeToString(sig), nil
+		return hex.EncodeToString(sig), nil
 	default:
 		return "", fmt.Errorf("invalid chain: %d", chain)
 	}
