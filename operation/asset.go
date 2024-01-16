@@ -1,19 +1,20 @@
 package operation
 
 import (
+	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/big"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/MixinNetwork/mixin/domains/mvm"
+	"github.com/MixinNetwork/mixin/crypto"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gofrs/uuid/v5"
 )
 
@@ -136,9 +137,66 @@ func GetSafeBTCAssetId(chainId, holder, symbol, name string) (string, error) {
 	}
 	addr := GetFactoryAssetAddress(chainId, symbol, name, holder)
 	assetKey := strings.ToLower(addr.String())
-	bondId, err := fetchAssetId(mvm.GenerateAssetId(assetKey).String())
+	bondId, err := fetchAssetId(GenerateAssetId(assetKey).String())
 	if err != nil {
 		return "", err
 	}
 	return bondId, nil
+}
+
+func VerifyAssetKey(assetKey string) error {
+	if len(assetKey) != 42 {
+		return fmt.Errorf("invalid mvm asset key %s", assetKey)
+	}
+	if !strings.HasPrefix(assetKey, "0x") {
+		return fmt.Errorf("invalid mvm asset key %s", assetKey)
+	}
+	if assetKey != strings.ToLower(assetKey) {
+		return fmt.Errorf("invalid mvm asset key %s", assetKey)
+	}
+	k, err := hex.DecodeString(assetKey[2:])
+	if err != nil {
+		return fmt.Errorf("invalid mvm asset key %s %s", assetKey, err.Error())
+	}
+	if len(k) != 20 {
+		return fmt.Errorf("invalid mvm asset key %s", assetKey)
+	}
+	return nil
+}
+
+func GenerateAssetId(assetKey string) crypto.Hash {
+	err := VerifyAssetKey(assetKey)
+	if err != nil {
+		panic(assetKey)
+	}
+
+	if assetKey == "0x0000000000000000000000000000000000000000" {
+		return MVMChainId
+	}
+
+	return BuildChainAssetId(MVMChainBase, assetKey)
+}
+
+func BuildChainAssetId(base, asset string) crypto.Hash {
+	h := md5.New()
+	io.WriteString(h, base)
+	io.WriteString(h, asset)
+	sum := h.Sum(nil)
+	sum[6] = (sum[6] & 0x0f) | 0x30
+	sum[8] = (sum[8] & 0x3f) | 0x80
+	id, err := uuid.FromBytes(sum)
+	if err != nil {
+		panic(hex.EncodeToString(sum))
+	}
+	return crypto.NewHash([]byte(id.String()))
+}
+
+var (
+	MVMChainBase string
+	MVMChainId   crypto.Hash
+)
+
+func init() {
+	MVMChainBase = "a0ffd769-5850-4b48-9651-d2ae44a3e64d"
+	MVMChainId = crypto.NewHash([]byte(MVMChainBase))
 }
