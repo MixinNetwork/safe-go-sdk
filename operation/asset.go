@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
+	gc "github.com/ethereum/go-ethereum/crypto"
 	"github.com/gofrs/uuid/v5"
 )
 
@@ -79,7 +80,7 @@ func GetFactoryAssetAddress(assetId, symbol, name string, holder string) common.
 	args = append(args, holder...)
 	args = append(args, symbol...)
 	args = append(args, name...)
-	salt := crypto.Keccak256(args)
+	salt := gc.Keccak256(args)
 
 	code, err := hex.DecodeString(assetContractCode[2:])
 	if err != nil {
@@ -94,8 +95,8 @@ func GetFactoryAssetAddress(assetId, symbol, name string, holder string) common.
 	input := []byte{0xff}
 	input = append(input, this...)
 	input = append(input, math.U256Bytes(new(big.Int).SetBytes(salt))...)
-	input = append(input, crypto.Keccak256(code)...)
-	return common.BytesToAddress(crypto.Keccak256(input))
+	input = append(input, gc.Keccak256(code)...)
+	return common.BytesToAddress(gc.Keccak256(input))
 }
 
 func fetchAssetId(mixinId string) (string, error) {
