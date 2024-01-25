@@ -116,3 +116,39 @@ func ProposeTransaction(operationId, publicKey string, typ byte, head, destinati
 	}
 	return op, nil
 }
+
+func ProposeBatchTransaction(operationId, publicKey string, typ byte, head string, hash []byte, chain byte) (*types.Operation, error) {
+	var action, curve uint8
+	switch chain {
+	case SafeChainBitcoin:
+		action = ActionBitcoinSafeProposeTransaction
+		curve = CurveSecp256k1ECDSABitcoin
+	case SafeChainLitecoin:
+		action = ActionBitcoinSafeProposeTransaction
+		curve = CurveSecp256k1ECDSALitecoin
+	case SafeChainEthereum:
+		action = ActionEthereumSafeProposeTransaction
+		curve = CurveSecp256k1ECDSAEthereum
+	case SafeChainMVM:
+		action = ActionEthereumSafeProposeTransaction
+		curve = CurveSecp256k1ECDSAMVM
+	case SafeChainPolygon:
+		action = ActionEthereumSafeProposeTransaction
+		curve = CurveSecp256k1ECDSAPolygon
+	default:
+		return nil, fmt.Errorf("invalid chain: %d", chain)
+	}
+
+	extra := []byte{typ}
+	extra = append(extra, uuid.FromStringOrNil(head).Bytes()...)
+	extra = append(extra, hash...)
+	fmt.Println(typ, head)
+	op := &types.Operation{
+		Id:     operationId,
+		Type:   action,
+		Curve:  curve,
+		Public: publicKey,
+		Extra:  extra,
+	}
+	return op, nil
+}
