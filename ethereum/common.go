@@ -175,10 +175,10 @@ func FetchAsset(chain byte, rpc, address string) (*Asset, error) {
 	assetId := GenerateAssetId(chain, address)
 
 	conn, err := ethclient.Dial(rpc)
-	defer conn.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer conn.Close()
 	token, err := abi.NewAsset(addr, conn)
 	if err != nil {
 		return nil, err
