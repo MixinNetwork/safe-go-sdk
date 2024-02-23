@@ -18,6 +18,7 @@ type Deposit struct {
 	Sender          string    `json:"sender"`
 	SentHash        string    `json:"sent_hash"`
 	UpdatedAt       time.Time `json:"updated_at"`
+	CreatedAt       time.Time `json:"created_at"`
 }
 
 func ReadDeposits(ctx context.Context, chain int64, offset int64) ([]*Deposit, error) {
