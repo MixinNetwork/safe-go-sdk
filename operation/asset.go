@@ -189,7 +189,7 @@ func BuildChainAssetId(base, asset string) crypto.Hash {
 	if err != nil {
 		panic(hex.EncodeToString(sum))
 	}
-	return crypto.NewHash([]byte(id.String()))
+	return crypto.Sha256Hash([]byte(id.String()))
 }
 
 var (
@@ -199,5 +199,5 @@ var (
 
 func init() {
 	MVMChainBase = "a0ffd769-5850-4b48-9651-d2ae44a3e64d"
-	MVMChainId = crypto.NewHash([]byte(MVMChainBase))
+	MVMChainId = crypto.Sha256Hash([]byte(MVMChainBase))
 }
