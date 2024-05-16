@@ -36,6 +36,7 @@ type Account struct {
 	Nonce           int64                   `json:"nonce"`          // For evm chains
 	Script          string                  `json:"script"`
 	State           string                  `json:"state"`
+	Migrated        bool                    `json:"migrated"`
 	Error           any                     `json:"error,omitempty"`
 }
 
