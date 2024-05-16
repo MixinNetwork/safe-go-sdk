@@ -19,9 +19,14 @@ type AssetBalance struct {
 	Amount       string `json:"amount"`
 }
 
+type Bond struct {
+	ID string `json:"id"`
+}
+
 type Account struct {
 	ID              string                  `json:"id"`
 	Address         string                  `json:"address"`
+	Bond            Bond                    `json:"bond"`
 	Chain           int64                   `json:"chain"`
 	Keys            []string                `json:"keys"`
 	Outputs         []Output                `json:"outputs"`        // For bitcoin, litecoin
