@@ -37,6 +37,7 @@ type Account struct {
 	Script          string                  `json:"script"`
 	State           string                  `json:"state"`
 	Migrated        bool                    `json:"migrated"`
+	Receiver        string                  `json:"receiver"`
 	Error           any                     `json:"error,omitempty"`
 }
 
