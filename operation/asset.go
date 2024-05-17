@@ -72,7 +72,6 @@ func packAssetArguments(symbol, name string) []byte {
 }
 
 func GetFactoryAssetAddress(receiver, assetId, symbol, name, holder string) common.Address {
-	fmt.Println(receiver, assetId, symbol, name, holder)
 	symbol, name = "safe"+symbol, name+" @ Mixin Safe"
 	id := uuid.Must(uuid.FromString(assetId))
 	args := common.HexToAddress(receiver).Bytes()

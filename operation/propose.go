@@ -142,7 +142,6 @@ func ProposeBatchTransaction(operationId, publicKey string, typ byte, head strin
 	extra := []byte{typ}
 	extra = append(extra, uuid.FromStringOrNil(head).Bytes()...)
 	extra = append(extra, hash...)
-	fmt.Println(typ, head)
 	op := &types.Operation{
 		Id:     operationId,
 		Type:   action,
