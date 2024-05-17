@@ -101,17 +101,12 @@ func GetFactoryAssetAddress(receiver, assetId, symbol, name, holder string) comm
 func GetSafeBTCAssetId(reciever, chainId, holder, symbol, name string) (string, error) {
 	switch chainId {
 	case SafeBitcoinChainId:
-		symbol, name = "BTC", "Bitcoin"
 	case SafeLitecoinChainId:
-		symbol, name = "LTC", "Litecoin"
-	case SafeEthereumChainId, SafeMVMChainId:
-		symbol, name = "ETH", "Ether"
+	case SafeEthereumChainId:
+	case SafeMVMChainId:
 	case SafePolygonChainId:
-		symbol, name = "MATIC", "Polygon"
 	default:
-		if name == "" || symbol == "" {
-			return "", fmt.Errorf("invalid asset symbol %s or name %s", symbol, name)
-		}
+		return "", fmt.Errorf("invalid chain %s", chainId)
 	}
 	addr := GetFactoryAssetAddress(reciever, chainId, symbol, name, holder)
 	assetKey := strings.ToLower(addr.String())
