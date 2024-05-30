@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 
 	"github.com/MixinNetwork/mixin/common"
+	"github.com/MixinNetwork/trusted-group/mtg"
 	"github.com/gofrs/uuid/v5"
 )
 
@@ -45,6 +46,10 @@ func (o *Operation) Encode() []byte {
 
 func (o *Operation) EncodeBase64() string {
 	return base64.RawURLEncoding.EncodeToString(o.Encode())
+}
+
+func (o *Operation) EncodeMtgMemo(appId, traceId string) string {
+	return mtg.EncodeMixinExtra(appId, traceId, string(o.Encode()))
 }
 
 func (o *Operation) IdBytes() []byte {
