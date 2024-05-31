@@ -9,8 +9,6 @@ github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migc
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
 github.com/MixinNetwork/mixin v0.18.5 h1:X9WunhpAwOfynjgc0MjseesJSsuMov3XOeT12xrVvI0=
 github.com/MixinNetwork/mixin v0.18.5/go.mod h1:4q18tY4LXnkOMmo7fl6ezXxc8J+N+o3Hx06Zh3/aj0I=
-github.com/MixinNetwork/trusted-group v0.6.2-0.20240514075940-fd36e5801587 h1:UiL4I2jefaPYCRypyIgJEI867dQ7fSTPalJ0HJi27Hs=
-github.com/MixinNetwork/trusted-group v0.6.2-0.20240514075940-fd36e5801587/go.mod h1:RkQzsoZrlG9lYcLJZaGDZIQ82N8AGDTQzibWZ27xB+E=
 github.com/MixinNetwork/trusted-group v0.6.2-0.20240530105623-41d1602b332a h1:oBe049BFPaJYqfkxAnBQVksiVzo/sNw/sIDM1ChJelk=
 github.com/MixinNetwork/trusted-group v0.6.2-0.20240530105623-41d1602b332a/go.mod h1:RkQzsoZrlG9lYcLJZaGDZIQ82N8AGDTQzibWZ27xB+E=
 github.com/VictoriaMetrics/fastcache v1.12.1 h1:i0mICQuojGDL3KblA7wUNlY5lOK6a4bwt3uRKnkZU40=

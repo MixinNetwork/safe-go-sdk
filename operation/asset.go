@@ -98,17 +98,22 @@ func GetFactoryAssetAddress(receiver, assetId, symbol, name, holder string) comm
 	return common.BytesToAddress(gc.Keccak256(input))
 }
 
-func GetSafeBTCAssetId(reciever, chainId, holder, symbol, name string) (string, error) {
-	switch chainId {
+func GetSafeBTCAssetId(reciever, assetId, holder, symbol, name string) (string, error) {
+	switch assetId {
 	case SafeBitcoinChainId:
+		symbol, name = "BTC", "Bitcoin"
 	case SafeLitecoinChainId:
-	case SafeEthereumChainId:
-	case SafeMVMChainId:
+		symbol, name = "LTC", "Litecoin"
+	case SafeEthereumChainId, SafeMVMChainId:
+		symbol, name = "ETH", "Ether"
 	case SafePolygonChainId:
+		symbol, name = "MATIC", "Polygon"
 	default:
-		return "", fmt.Errorf("invalid chain %s", chainId)
+		if name == "" || symbol == "" {
+			return "", fmt.Errorf("invalid asset symbol %s or name %s", symbol, name)
+		}
 	}
-	addr := GetFactoryAssetAddress(reciever, chainId, symbol, name, holder)
+	addr := GetFactoryAssetAddress(reciever, assetId, symbol, name, holder)
 	assetKey := strings.ToLower(addr.String())
 	return GenerateAssetId(assetKey), nil
 }
