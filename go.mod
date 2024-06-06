@@ -4,7 +4,7 @@ go 1.22.2
 
 require (
 	github.com/MixinNetwork/mixin v0.18.5
-	github.com/MixinNetwork/trusted-group v0.6.2-0.20240530105623-41d1602b332a
+	github.com/MixinNetwork/trusted-group v0.6.2-0.20240604160714-48773c6ce3bd
 	github.com/btcsuite/btcd v0.23.4
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/btcsuite/btcd/btcutil v1.1.3
