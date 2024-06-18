@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 
+	gc "github.com/MixinNetwork/go-safe-sdk/common"
 	"github.com/MixinNetwork/mixin/common"
 	"github.com/gofrs/uuid/v5"
 )
@@ -48,19 +49,7 @@ func (o *Operation) EncodeBase64() string {
 }
 
 func (o *Operation) EncodeMtgMemo(appId, traceId string) string {
-	gid, err := uuid.FromString(appId)
-	if err != nil {
-		panic(err)
-	}
-	tid, err := uuid.FromString(traceId)
-	if err != nil {
-		panic(err)
-	}
-	var data []byte
-	data = append(data, gid.Bytes()...)
-	data = append(data, tid.Bytes()...)
-	data = append(data, o.Encode()...)
-	return base64.RawURLEncoding.EncodeToString(data)
+	return gc.EncodeMixinExtra(appId, traceId, string(o.Encode()))
 }
 
 func (o *Operation) IdBytes() []byte {
