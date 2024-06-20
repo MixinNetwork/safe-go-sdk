@@ -17,7 +17,7 @@ type Output struct {
 type AssetBalance struct {
 	AssetAddress string `json:"asset_address"`
 	Amount       string `json:"amount"`
-	Migrated     string `json:"migrated,omitempty"`
+	Migrated     bool   `json:"migrated"`
 }
 
 type Bond struct {
