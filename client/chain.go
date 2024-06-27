@@ -6,6 +6,15 @@ import (
 	"time"
 )
 
+type AccountantOutputs struct {
+	Count   int    `json:"count"`
+	Satoshi uint64 `json:"satoshi"`
+}
+
+type Accountant struct {
+	Outputs AccountantOutputs `json:"outputs"`
+}
+
 type Head struct {
 	CreatedAt time.Time `json:"created_at"`
 	Fee       int64     `json:"fee"`
@@ -15,9 +24,11 @@ type Head struct {
 }
 
 type Chain struct {
-	ID    string `json:"id"`
-	Chain int64  `json:"chain"`
-	Head  *Head  `json:"head"`
+	ID         string     `json:"id"`
+	Chain      int64      `json:"chain"`
+	Head       *Head      `json:"head"`
+	Accountant Accountant `json:"accountant,omitempty"` // For bitcoin, litecoin
+	Sender     string     `json:"sender,omitempty"`     // For evm chains
 }
 
 func ReadChains(ctx context.Context) ([]*Chain, error) {
