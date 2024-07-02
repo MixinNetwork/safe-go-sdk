@@ -15,18 +15,13 @@ func DecodeHexOrPanic(s string) []byte {
 	return b
 }
 
-func EncodeMixinExtra(appId, traceId, memo string) string {
-	gid, err := uuid.FromString(appId)
-	if err != nil {
-		panic(err)
-	}
-	tid, err := uuid.FromString(traceId)
+func EncodeMixinExtra(appId, memo string) string {
+	aid, err := uuid.FromString(appId)
 	if err != nil {
 		panic(err)
 	}
 	var data []byte
-	data = append(data, gid.Bytes()...)
-	data = append(data, tid.Bytes()...)
+	data = append(data, aid.Bytes()...)
 	data = append(data, []byte(memo)...)
 	return base64.RawURLEncoding.EncodeToString(data)
 }

@@ -48,8 +48,8 @@ func (o *Operation) EncodeBase64() string {
 	return base64.RawURLEncoding.EncodeToString(o.Encode())
 }
 
-func (o *Operation) EncodeMtgMemo(appId, traceId string) string {
-	return gc.EncodeMixinExtra(appId, traceId, string(o.Encode()))
+func (o *Operation) EncodeMtgMemo(appId string) string {
+	return gc.EncodeMixinExtra(appId, string(o.Encode()))
 }
 
 func (o *Operation) IdBytes() []byte {
