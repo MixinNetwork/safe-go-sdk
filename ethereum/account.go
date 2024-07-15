@@ -3,6 +3,8 @@ package ethereum
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
+	"strings"
 	"time"
 
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
@@ -10,8 +12,39 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+func GetSafeAccountGuard(rpc, address string) (string, error) {
+	conn, abi, err := safeInit(rpc, address)
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+
+	bGuardOffet, err := hex.DecodeString(guardStorageSlot[2:])
+	if err != nil {
+		return "", err
+	}
+	bGuard, err := abi.GetStorageAt(nil, new(big.Int).SetBytes(bGuardOffet), new(big.Int).SetInt64(1))
+	if err != nil {
+		if strings.Contains(err.Error(), "no contract code at given address") {
+			return "", nil
+		}
+		return "", err
+	}
+	guardAddress := common.BytesToAddress(bGuard)
+	return guardAddress.Hex(), nil
+}
+
 func GetSafeLastTxTime(rpc, address string) (time.Time, error) {
-	conn, abi, err := guardInit(rpc)
+	guardAddress, err := GetSafeAccountGuard(rpc, address)
+	if err != nil {
+		return time.Time{}, err
+	}
+	switch guardAddress {
+	case "", EthereumEmptyAddress:
+		panic(fmt.Errorf("safe %s is not deployed or guard is not enabled", address))
+	}
+
+	conn, abi, err := guardInit(rpc, guardAddress)
 	if err != nil {
 		return time.Time{}, err
 	}
