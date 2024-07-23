@@ -6,11 +6,11 @@ require (
 	github.com/MixinNetwork/mixin v0.18.12
 	github.com/MixinNetwork/trusted-group v0.7.6
 	github.com/btcsuite/btcd v0.24.2
-	github.com/btcsuite/btcd/btcec/v2 v2.3.4
+	github.com/btcsuite/btcd/btcec/v2 v2.3.3
 	github.com/btcsuite/btcd/btcutil v1.1.5
 	github.com/btcsuite/btcd/btcutil/psbt v1.1.9
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
-	github.com/ethereum/go-ethereum v1.14.7
+	github.com/ethereum/go-ethereum v1.14.6
 	github.com/gofrs/uuid/v5 v5.2.0
 	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.9.0
