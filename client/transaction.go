@@ -7,14 +7,16 @@ import (
 )
 
 type Transaction struct {
-	ID      string   `json:"id"`
-	Chain   int64    `json:"chain"`
-	Fee     string   `json:"fee"`
-	Hash    string   `json:"hash"`
-	Raw     string   `json:"raw"`
-	Signers []string `json:"signers"`
-	State   string   `json:"state"`
-	Error   any      `json:"error,omitempty"`
+	AccountID      string   `json:"account_id"`
+	AccountAddress string   `json:"account_address"`
+	ID             string   `json:"id"`
+	Chain          int64    `json:"chain"`
+	Fee            string   `json:"fee"`
+	Hash           string   `json:"hash"`
+	Raw            string   `json:"raw"`
+	Signers        []string `json:"signers"`
+	State          string   `json:"state"`
+	Error          any      `json:"error,omitempty"`
 }
 
 func ReadTransaction(ctx context.Context, id string) (*Transaction, error) {
