@@ -42,6 +42,10 @@ const (
 	TransactionConfirmations = 1
 )
 
+func BitcoinDefaultDerivationPath() []byte {
+	return []byte{2, 0, 0, 0}
+}
+
 func ParseSatoshi(amount string) (int64, error) {
 	amt, err := decimal.NewFromString(amount)
 	if err != nil {
@@ -143,6 +147,22 @@ func DeriveBIP32(public string, chainCode []byte, children ...uint32) (string, s
 		return "", "", err
 	}
 	return extPub.String(), hex.EncodeToString(pub.SerializeCompressed()), nil
+}
+
+func DeriveBIP32WithPath(public, chaincode string, path8 []byte) (string, error) {
+	if path8[0] > 3 {
+		panic(path8[0])
+	}
+	path32 := make([]uint32, path8[0])
+	for i := 0; i < int(path8[0]); i++ {
+		path32[i] = uint32(path8[1+i])
+	}
+	cc, err := hex.DecodeString(chaincode)
+	if err != nil {
+		return "", err
+	}
+	_, sdk, err := DeriveBIP32(public, cc, path32...)
+	return sdk, err
 }
 
 func HashMessageForSignature(msg string, chain byte) ([]byte, error) {
