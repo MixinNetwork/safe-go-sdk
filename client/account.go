@@ -25,10 +25,11 @@ type Account struct {
 	Address         string                  `json:"address"`
 	Chain           int64                   `json:"chain"`
 	Keys            []string                `json:"keys"`
-	Outputs         []Output                `json:"outputs"`        // For bitcoin, litecoin
-	Pendings        []Output                `json:"pendings"`       // For bitcoin, litecoin
-	Balances        map[string]AssetBalance `json:"balances"`       // For evm chains
-	PendingBalances map[string]AssetBalance `json:"pendingbalance"` // For evm chains
+	Outputs         []Output                `json:"outputs"`        // For bitcoin, litecoin: unspent outputs,
+	Pendings        []Output                `json:"pendings"`       // For bitcoin, litecoin: signed outptus,
+	Changes         []Output                `json:"changes"`        // For bitcoin, litecoin: unreceived changes
+	Balances        map[string]AssetBalance `json:"balances"`       // For evm chains: unspent balances,
+	PendingBalances map[string]AssetBalance `json:"pendingbalance"` // For evm chains: signed balances,
 	Nonce           int64                   `json:"nonce"`          // For evm chains
 	Script          string                  `json:"script"`
 	State           string                  `json:"state"`
