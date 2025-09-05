@@ -53,15 +53,13 @@ func ReadRecovery(ctx context.Context, id string) (*Recovery, error) {
 }
 
 type recoveryRequest struct {
-	Raw  string `json:"raw"`
-	Hash string `json:"hash"`
+	Signature string `json:"signature"`
+	Raw       string `json:"raw"`
+	Hash      string `json:"hash"`
+	Action    string `json:"action"`
 }
 
-func SignRecovery(ctx context.Context, id, raw, hash string) (*Recovery, error) {
-	req := recoveryRequest{
-		Raw:  raw,
-		Hash: hash,
-	}
+func SignRecovery(ctx context.Context, id string, req recoveryRequest) (*Recovery, error) {
 	reqBuf, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
