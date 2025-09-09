@@ -56,6 +56,7 @@ type RecoveryRequest struct {
 	Signature string `json:"signature"`
 	Raw       string `json:"raw"`
 	Hash      string `json:"hash"`
+	Id        string `json:"id"`
 	Action    string `json:"action"`
 }
 
