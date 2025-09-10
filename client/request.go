@@ -19,7 +19,7 @@ var (
 
 func init() {
 	httpUri = ProdHost
-	httpClient = &http.Client{Timeout: 10 * time.Second}
+	httpClient = &http.Client{Timeout: 1 * time.Minute}
 }
 
 func SetBaseUri(base string) {
