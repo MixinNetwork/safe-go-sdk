@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 type Output struct {
@@ -38,6 +39,19 @@ type Account struct {
 	Error           any                     `json:"error,omitempty"`
 }
 
+type Inheritance struct {
+	LockId    string    `json:"lock_id"`
+	RequestId string    `json:"request_id"`
+	Hash      string    `json:"hash"`
+	Holder    string    `json:"holder"`
+	Address   string    `json:"address"`
+	Chain     string    `json:"chain"`
+	Duration  string    `json:"duration"` // lock for hours
+	Status    string    `json:"state"`    // initial | active | revoked
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 func ReadAccount(ctx context.Context, id string) (*Account, error) {
 	data, err := Request(ctx, "GET", fmt.Sprintf("/accounts/%s", id), nil)
 	if err != nil {
@@ -59,6 +73,20 @@ func ReadAccount(ctx context.Context, id string) (*Account, error) {
 		return nil, nil
 	}
 	return &body, nil
+}
+
+func ReadAccountInheritances(ctx context.Context, id string) ([]*Inheritance, error) {
+	data, err := Request(ctx, "GET", fmt.Sprintf("/accounts/%s/inheritances", id), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var inheritances []*Inheritance
+	err = json.Unmarshal(data, &inheritances)
+	if err != nil {
+		return nil, err
+	}
+	return inheritances, nil
 }
 
 type accountRequest struct {

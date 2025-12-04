@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"github.com/MixinNetwork/go-safe-sdk/common"
 	"github.com/MixinNetwork/go-safe-sdk/types"
 	"github.com/gofrs/uuid/v5"
 )
@@ -19,24 +20,28 @@ const (
 	CurveSecp256k1ECDSAPolygon  = 110 + CurveSecp256k1ECDSAEthereum
 
 	// For all Bitcoin like chains
-	ActionBitcoinSafeProposeAccount     = 110
-	ActionBitcoinSafeApproveAccount     = 111
-	ActionBitcoinSafeProposeTransaction = 112
-	ActionBitcoinSafeApproveTransaction = 113
-	ActionBitcoinSafeRevokeTransaction  = 114
-	ActionBitcoinSafeCloseAccount       = 115
+	ActionBitcoinSafeProposeAccount            = 110
+	ActionBitcoinSafeApproveAccount            = 111
+	ActionBitcoinSafeProposeTransaction        = 112
+	ActionBitcoinSafeApproveTransaction        = 113
+	ActionBitcoinSafeRevokeTransaction         = 114
+	ActionBitcoinSafeCloseAccount              = 115
+	ActionBitcoinSafeCloseAccountByInheritance = 116
 
 	// For all Ethereum like chains
-	ActionEthereumSafeProposeAccount     = 130
-	ActionEthereumSafeApproveAccount     = 131
-	ActionEthereumSafeProposeTransaction = 132
-	ActionEthereumSafeApproveTransaction = 133
-	ActionEthereumSafeRevokeTransaction  = 134
-	ActionEthereumSafeCloseAccount       = 135
-	ActionEthereumSafeRefundTransaction  = 136
+	ActionEthereumSafeProposeAccount            = 130
+	ActionEthereumSafeApproveAccount            = 131
+	ActionEthereumSafeProposeTransaction        = 132
+	ActionEthereumSafeApproveTransaction        = 133
+	ActionEthereumSafeRevokeTransaction         = 134
+	ActionEthereumSafeCloseAccount              = 135
+	ActionEthereumSafeRefundTransaction         = 136
+	ActionEthereumSafeCloseAccountByInheritance = 137
 
-	TransactionTypeNormal   = 0
-	TransactionTypeRecovery = 1
+	TransactionTypeNormal            = 0
+	TransactionTypeRecovery          = 1
+	TransactionTypeSetInheritance    = 2
+	TransactionTypeRemoveInheritance = 3
 )
 
 func ProposeAccount(operationId, publicKey string, owners []string, threshold, chain byte, timeLock uint16) (*types.Operation, error) {
@@ -142,6 +147,51 @@ func ProposeBatchTransaction(operationId, publicKey string, typ byte, head strin
 	extra := []byte{typ}
 	extra = append(extra, uuid.FromStringOrNil(head).Bytes()...)
 	extra = append(extra, hash...)
+	op := &types.Operation{
+		Id:     operationId,
+		Type:   action,
+		Curve:  curve,
+		Public: publicKey,
+		Extra:  extra,
+	}
+	return op, nil
+}
+
+func ProposeInheritanceTransaction(operationId, publicKey string, typ byte, head, destination string, chain byte, lockID, hash string, duration uint16) (*types.Operation, error) {
+	var action, curve uint8
+	switch chain {
+	case SafeChainBitcoin:
+		action = ActionBitcoinSafeProposeTransaction
+		curve = CurveSecp256k1ECDSABitcoin
+	case SafeChainLitecoin:
+		action = ActionBitcoinSafeProposeTransaction
+		curve = CurveSecp256k1ECDSALitecoin
+	case SafeChainEthereum:
+		action = ActionEthereumSafeProposeTransaction
+		curve = CurveSecp256k1ECDSAEthereum
+	case SafeChainMVM:
+		action = ActionEthereumSafeProposeTransaction
+		curve = CurveSecp256k1ECDSAMVM
+	case SafeChainPolygon:
+		action = ActionEthereumSafeProposeTransaction
+		curve = CurveSecp256k1ECDSAPolygon
+	default:
+		return nil, fmt.Errorf("invalid chain: %d", chain)
+	}
+
+	extra := []byte{typ}
+	switch typ {
+	case TransactionTypeSetInheritance:
+		extra = append(extra, common.DecodeHexOrPanic(hash)...)
+		extra = append(extra, binary.BigEndian.AppendUint16(nil, duration)...)
+	case TransactionTypeRemoveInheritance:
+		extra = append(extra, uuid.FromStringOrNil(lockID).Bytes()...)
+	default:
+		return nil, fmt.Errorf("invalid inheritance tx type: %d", typ)
+	}
+	extra = append(extra, uuid.FromStringOrNil(head).Bytes()...)
+	extra = append(extra, []byte(destination)...)
+
 	op := &types.Operation{
 		Id:     operationId,
 		Type:   action,
