@@ -40,8 +40,9 @@ const (
 
 	TransactionTypeNormal            = 0
 	TransactionTypeRecovery          = 1
-	TransactionTypeSetInheritance    = 2
-	TransactionTypeRemoveInheritance = 3
+	TransactionTypeCancel            = 2
+	TransactionTypeSetInheritance    = 3
+	TransactionTypeRemoveInheritance = 4
 )
 
 func ProposeAccount(operationId, publicKey string, owners []string, threshold, chain byte, timeLock uint16) (*types.Operation, error) {
@@ -147,6 +148,42 @@ func ProposeBatchTransaction(operationId, publicKey string, typ byte, head strin
 	extra := []byte{typ}
 	extra = append(extra, uuid.FromStringOrNil(head).Bytes()...)
 	extra = append(extra, hash...)
+	op := &types.Operation{
+		Id:     operationId,
+		Type:   action,
+		Curve:  curve,
+		Public: publicKey,
+		Extra:  extra,
+	}
+	return op, nil
+}
+
+func ProposeCancelTransaction(operationId, publicKey string, typ byte, head, destination string, chain byte, cancelId string) (*types.Operation, error) {
+	var action, curve uint8
+	switch chain {
+	case SafeChainBitcoin:
+		action = ActionBitcoinSafeProposeTransaction
+		curve = CurveSecp256k1ECDSABitcoin
+	case SafeChainLitecoin:
+		action = ActionBitcoinSafeProposeTransaction
+		curve = CurveSecp256k1ECDSALitecoin
+	case SafeChainEthereum:
+		action = ActionEthereumSafeProposeTransaction
+		curve = CurveSecp256k1ECDSAEthereum
+	case SafeChainMVM:
+		action = ActionEthereumSafeProposeTransaction
+		curve = CurveSecp256k1ECDSAMVM
+	case SafeChainPolygon:
+		action = ActionEthereumSafeProposeTransaction
+		curve = CurveSecp256k1ECDSAPolygon
+	default:
+		return nil, fmt.Errorf("invalid chain: %d", chain)
+	}
+
+	extra := []byte{typ}
+	extra = append(extra, uuid.Must(uuid.FromString(cancelId)).Bytes()...)
+	extra = append(extra, uuid.FromStringOrNil(head).Bytes()...)
+	extra = append(extra, []byte(destination)...)
 	op := &types.Operation{
 		Id:     operationId,
 		Type:   action,
