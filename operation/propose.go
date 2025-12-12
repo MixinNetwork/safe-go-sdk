@@ -158,7 +158,7 @@ func ProposeBatchTransaction(operationId, publicKey string, typ byte, head strin
 	return op, nil
 }
 
-func ProposeCancelTransaction(operationId, publicKey string, typ byte, head, destination string, chain byte, cancelId string) (*types.Operation, error) {
+func ProposeCancelTransaction(operationId, publicKey string, head, destination string, chain byte, cancelId string) (*types.Operation, error) {
 	var action, curve uint8
 	switch chain {
 	case SafeChainBitcoin:
@@ -180,7 +180,7 @@ func ProposeCancelTransaction(operationId, publicKey string, typ byte, head, des
 		return nil, fmt.Errorf("invalid chain: %d", chain)
 	}
 
-	extra := []byte{typ}
+	extra := []byte{TransactionTypeCancel}
 	extra = append(extra, uuid.Must(uuid.FromString(cancelId)).Bytes()...)
 	extra = append(extra, uuid.FromStringOrNil(head).Bytes()...)
 	extra = append(extra, []byte(destination)...)
