@@ -17,6 +17,7 @@ type Deposit struct {
 	TransactionHash string    `json:"transaction_hash"`
 	Sender          string    `json:"sender"`
 	SentHash        string    `json:"sent_hash"`
+	State           string    `json:"state"` // done | pending
 	UpdatedAt       time.Time `json:"updated_at"`
 	CreatedAt       time.Time `json:"created_at"`
 }
