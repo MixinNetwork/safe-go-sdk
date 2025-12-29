@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -125,4 +127,22 @@ func ParseEthereumUncompressedPublicKey(public string) (*common.Address, error) 
 
 	addr := crypto.PubkeyToAddress(*publicKey)
 	return &addr, nil
+}
+
+func FetchSafeNonce(ctx context.Context, rpc, address string, height int64) (int64, error) {
+	conn, abi, err := safeInit(rpc, address)
+	if err != nil {
+		return 0, err
+	}
+	defer conn.Close()
+
+	opt := &bind.CallOpts{}
+	if height > 0 {
+		opt.BlockNumber = big.NewInt(height)
+	}
+	nonce, err := abi.Nonce(opt)
+	if err != nil {
+		return 0, err
+	}
+	return nonce.Int64(), nil
 }
