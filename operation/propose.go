@@ -217,12 +217,12 @@ func ProposeInheritanceTransaction(operationId, publicKey string, typ byte, head
 	}
 
 	extra := []byte{typ}
-	extra = append(extra, uuid.FromStringOrNil(lockID).Bytes()...)
 	switch typ {
 	case TransactionTypeSetInheritance:
 		extra = append(extra, common.DecodeHexOrPanic(hash)...)
 		extra = append(extra, binary.BigEndian.AppendUint16(nil, duration)...)
 	case TransactionTypeRemoveInheritance:
+		extra = append(extra, uuid.FromStringOrNil(lockID).Bytes()...)
 	default:
 		return nil, fmt.Errorf("invalid inheritance tx type: %d", typ)
 	}
