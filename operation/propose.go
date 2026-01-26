@@ -194,7 +194,7 @@ func ProposeCancelTransaction(operationId, publicKey string, head, destination s
 	return op, nil
 }
 
-func ProposeInheritanceTransaction(operationId, publicKey string, typ byte, head, destination string, chain byte, lockID, hash string, duration uint16) (*types.Operation, error) {
+func ProposeInheritanceTransaction(operationId, publicKey string, typ byte, head, destination string, chain byte, lockID, hash string, duration int64) (*types.Operation, error) {
 	var action, curve uint8
 	switch chain {
 	case SafeChainBitcoin:
@@ -220,7 +220,7 @@ func ProposeInheritanceTransaction(operationId, publicKey string, typ byte, head
 	switch typ {
 	case TransactionTypeSetInheritance:
 		extra = append(extra, common.DecodeHexOrPanic(hash)...)
-		extra = append(extra, binary.BigEndian.AppendUint16(nil, duration)...)
+		extra = append(extra, binary.BigEndian.AppendUint16(nil, uint16(duration))...)
 	case TransactionTypeRemoveInheritance:
 		extra = append(extra, uuid.FromStringOrNil(lockID).Bytes()...)
 	default:
