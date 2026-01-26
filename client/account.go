@@ -46,7 +46,7 @@ type Inheritance struct {
 	Holder    string    `json:"holder"`
 	Address   string    `json:"address"`
 	Chain     int64     `json:"chain"`
-	Duration  int64     `json:"duration"` // lock for hours
+	Duration  uint16    `json:"duration"` // lock for hours
 	Status    string    `json:"state"`    // initial | active | revoked
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
