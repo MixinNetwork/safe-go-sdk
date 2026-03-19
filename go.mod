@@ -1,9 +1,9 @@
 module github.com/MixinNetwork/go-safe-sdk
 
-go 1.26.0
+go 1.26.1
 
 require (
-	github.com/MixinNetwork/mixin v0.18.31
+	github.com/MixinNetwork/mixin v0.18.32
 	github.com/btcsuite/btcd v0.25.0
 	github.com/btcsuite/btcd/btcec/v2 v2.3.6
 	github.com/btcsuite/btcd/btcutil v1.1.6
