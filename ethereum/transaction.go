@@ -328,6 +328,7 @@ func (tx *SafeTransaction) ParseMultiSendData() ([]*Output, error) {
 		}
 		switch {
 		case dataLen == 0:
+			o.TokenAddress = EthereumEmptyAddress
 		case int(dataLen) == 68:
 			metaData := multiSendData[offset : offset+int(dataLen)]
 			strData := hex.EncodeToString(metaData)
