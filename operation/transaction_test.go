@@ -21,8 +21,33 @@ func TestSignTx(t *testing.T) {
 	h := "70736274ff0100a40200000001d7fd88df22604c77503345ac0f9c81307406253b280a69b2f5d5c7818ec7c7bf0100000000ffffffff03a08601000000000022002097d984899b9916b84a13fcdbf0d101e19ada5146130ddc06bfc99194a03bef38e093040000000000220020f31c53a74dfd597480c0605ed13c048fc5ea2b19f051a136b8bf960e33fcda2d0000000000000000126a10ea0d8a3188194fe5ac22cdef9e61a4a0000000000001012b801a060000000000220020f31c53a74dfd597480c0605ed13c048fc5ea2b19f051a136b8bf960e33fcda2d220203221c2eeb196e913e5d890f33b110ae6af6fbddac2a8b9921aaa5d8a60a5cd20146304402206743c5c4e9e1cd4f67a50fda53f1bef8382baf7a70d288f7269ddd608d2c632102203826c26f8750566d309bff1452906b33a315a7bd94deef0b2fa8c74caf76b4b8010304810000000105782103221c2eeb196e913e5d890f33b110ae6af6fbddac2a8b9921aaa5d8a60a5cd201ac7c21035684fa60a93e85f940a2445ab7f2fb1786a4b415ef60cb8c53e1970b50b80324ac937c82926321032cb1c1eef0e43e19c9571c37ad5548289b4916ee898d48ef8b806397cd45da92ad02c006b2926893528700000000"
 	rawb, err := hex.DecodeString(h)
 	assert.Nil(err)
-	_, err = bitcoin.UnmarshalPartiallySignedTransaction(rawb)
+	psbt, err := bitcoin.UnmarshalPartiallySignedTransaction(rawb)
 	assert.Nil(err)
+	assert.Len(psbt.UnsignedTx.TxOut, 3)
+
+	type Output struct {
+		Value       int64
+		Destination string
+	}
+	addresses := []Output{
+		{
+			Destination: "bc1qjlvcfzvmnyttsjsnlndlp5gpuxdd552xzvxacp4lexgefgpmauuqf8pjcn",
+			Value:       100000,
+		},
+		{
+			Destination: "bc1q7vw98f6dl4vhfqxqvp0dz0qy3lz752ce7pg6zd4ch7tquvlumgks2ua5zg",
+			Value:       300000,
+		},
+	}
+	for i, out := range psbt.UnsignedTx.TxOut {
+		if out.Value == 0 {
+			continue
+		}
+		addr, err := bitcoin.ExtractPkScriptAddr(out.PkScript, common.ChainBitcoin)
+		assert.Nil(err)
+		assert.Equal(out.Value, addresses[i].Value)
+		assert.Equal(addr, addresses[i].Destination)
+	}
 }
 
 func TestParseEthTx(t *testing.T) {
