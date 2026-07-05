@@ -11,8 +11,8 @@ import (
 
 	"github.com/MixinNetwork/go-safe-sdk/common"
 	"github.com/MixinNetwork/mixin/logger"
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/btcutil/v2"
+	"github.com/btcsuite/btcd/txscript/v2"
 	"github.com/shopspring/decimal"
 )
 

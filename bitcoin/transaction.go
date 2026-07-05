@@ -10,15 +10,16 @@ import (
 	"time"
 
 	"github.com/MixinNetwork/go-safe-sdk/common"
+	"github.com/btcsuite/btcd/address/v2"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/btcutil/psbt"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/btcutil/v2"
+	"github.com/btcsuite/btcd/chainhash/v2"
 	"github.com/btcsuite/btcd/mempool"
-	"github.com/btcsuite/btcd/txscript"
-	"github.com/btcsuite/btcd/wire"
+	"github.com/btcsuite/btcd/psbt/v2"
+	"github.com/btcsuite/btcd/txscript/v2"
+	"github.com/btcsuite/btcd/wire/v2"
 )
 
 type Input struct {
@@ -157,8 +158,7 @@ func BuildPartiallySignedTransaction(mainInputs []*Input, outputs []*Output, rid
 		return nil, fmt.Errorf("psbt.NewFromUnsignedTx() => %v", err)
 	}
 	for i, in := range mainInputs {
-		address := mainAddress
-		addr, err := btcutil.DecodeAddress(address, cfg)
+		addr, err := address.DecodeAddress(mainAddress, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -231,8 +231,8 @@ func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
 	}
 	switch typ {
 	case InputTypeP2WPKHAccoutant:
-		in.Script = btcutil.Hash160(in.Script)
-		wpkh, err := btcutil.NewAddressWitnessPubKeyHash(in.Script, cfg)
+		in.Script = address.Hash160(in.Script)
+		wpkh, err := address.NewAddressWitnessPubKeyHash(in.Script, cfg)
 		if err != nil {
 			return "", err
 		}
@@ -248,7 +248,7 @@ func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
 		txIn.Sequence = MaxTransactionSequence
 	case InputTypeP2WSHMultisigHolderSigner:
 		msh := sha256.Sum256(in.Script)
-		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], cfg)
+		mwsh, err := address.NewAddressWitnessScriptHash(msh[:], cfg)
 		if err != nil {
 			return "", err
 		}
@@ -256,7 +256,7 @@ func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
 		txIn.Sequence = MaxTransactionSequence
 	case InputTypeP2WSHMultisigObserverSigner:
 		msh := sha256.Sum256(in.Script)
-		mwsh, err := btcutil.NewAddressWitnessScriptHash(msh[:], cfg)
+		mwsh, err := address.NewAddressWitnessScriptHash(msh[:], cfg)
 		if err != nil {
 			return "", err
 		}
@@ -272,12 +272,12 @@ func addInput(tx *wire.MsgTx, in *Input, chain byte) (string, error) {
 	return addr, nil
 }
 
-func addOutput(tx *wire.MsgTx, address string, satoshi int64, chain byte) error {
+func addOutput(tx *wire.MsgTx, receiver string, satoshi int64, chain byte) error {
 	cfg, err := common.NetConfig(chain)
 	if err != nil {
 		return err
 	}
-	addr, err := btcutil.DecodeAddress(address, cfg)
+	addr, err := address.DecodeAddress(receiver, cfg)
 	if err != nil {
 		return err
 	}
@@ -420,13 +420,16 @@ func SignTx(rawStr, privateStr string, chain byte) (string, error) {
 	return hex.EncodeToString(raw), nil
 }
 
-func parseBitcoinCompressedPublicKey(public string) (*btcutil.AddressPubKey, error) {
+func parseBitcoinCompressedPublicKey(public string) (*address.AddressPubKey, error) {
 	pub, err := hex.DecodeString(public)
 	if err != nil {
 		return nil, err
 	}
-	cfg, _ := common.NetConfig(common.ChainBitcoin)
-	return btcutil.NewAddressPubKey(pub, cfg)
+	cfg, err := common.NetConfig(common.ChainBitcoin)
+	if err != nil {
+		return nil, err
+	}
+	return address.NewAddressPubKey(pub, cfg)
 }
 
 func VerifySignatureDER(public string, msg, sig []byte) error {
