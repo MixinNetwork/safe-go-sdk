@@ -3,7 +3,7 @@ module github.com/MixinNetwork/go-safe-sdk
 go 1.26.5
 
 require (
-	github.com/MixinNetwork/mixin v0.19.0
+	github.com/MixinNetwork/mixin v0.19.2
 	github.com/btcsuite/btcd v0.26.0
 	github.com/btcsuite/btcd/address/v2 v2.0.0
 	github.com/btcsuite/btcd/btcec/v2 v2.5.0
@@ -24,7 +24,6 @@ require (
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20260713035539-e6945a76b084 // indirect
-	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/aead/siphash v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.24.6 // indirect
 	github.com/btcsuite/btclog v1.0.0 // indirect
