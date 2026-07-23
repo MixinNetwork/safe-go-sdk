@@ -12,7 +12,7 @@ require (
 	github.com/btcsuite/btcd/chainhash/v2 v2.0.0
 	github.com/btcsuite/btcd/psbt/v2 v2.0.0
 	github.com/btcsuite/btcd/txscript/v2 v2.0.0
-	github.com/btcsuite/btcd/wire/v2 v2.0.0
+	github.com/btcsuite/btcd/wire/v2 v2.0.1
 	github.com/ethereum/go-ethereum v1.17.4
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/shopspring/decimal v1.4.0
@@ -24,7 +24,6 @@ require (
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20260713035539-e6945a76b084 // indirect
-	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/aead/siphash v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.24.6 // indirect
 	github.com/btcsuite/btclog v1.0.0 // indirect
