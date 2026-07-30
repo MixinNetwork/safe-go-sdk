@@ -13,7 +13,7 @@ require (
 	github.com/btcsuite/btcd/psbt/v2 v2.0.0
 	github.com/btcsuite/btcd/txscript/v2 v2.0.0
 	github.com/btcsuite/btcd/wire/v2 v2.0.1
-	github.com/ethereum/go-ethereum v1.17.4
+	github.com/ethereum/go-ethereum v1.17.5
 	github.com/gofrs/uuid/v5 v5.5.0
 	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.11.1
