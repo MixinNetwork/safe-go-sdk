@@ -4,7 +4,7 @@ go 1.26.5
 
 require (
 	github.com/MixinNetwork/mixin v0.19.2
-	github.com/btcsuite/btcd v0.26.0
+	github.com/btcsuite/btcd v0.26.2
 	github.com/btcsuite/btcd/address/v2 v2.0.0
 	github.com/btcsuite/btcd/btcec/v2 v2.5.0
 	github.com/btcsuite/btcd/btcutil/v2 v2.0.1
