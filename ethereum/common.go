@@ -117,6 +117,25 @@ func BuildChainAssetId(base, asset string) string {
 	return id.String()
 }
 
+func uniqueId(a, b string) string {
+	if strings.Compare(a, b) > 0 {
+		a, b = b, a
+	}
+	h := md5.New()
+	io.WriteString(h, a)
+	io.WriteString(h, b)
+	sum := h.Sum(nil)
+	sum[6] = (sum[6] & 0x0f) | 0x30
+	sum[8] = (sum[8] & 0x3f) | 0x80
+	return uuid.Must(uuid.FromBytes(sum)).String()
+}
+
+// GetRecoveryRequestId binds a holder-key recovery request to its Safe and destination.
+func GetRecoveryRequestId(address, destination string) string {
+	requestID := uniqueId("ETHEREUM:RECOVERY", address)
+	return uniqueId(requestID, destination)
+}
+
 func HashMessageForSignature(msg string) ([]byte, error) {
 	b, err := hex.DecodeString(msg)
 	if err != nil {
