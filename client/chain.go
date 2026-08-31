@@ -23,12 +23,27 @@ type Head struct {
 	ID        string    `json:"id"`
 }
 
+type ChainOperationParams struct {
+	Asset string `json:"asset"`
+	Price string `json:"price"`
+}
+
+type ChainTransactionParams struct {
+	Minimum string `json:"minimum"`
+}
+
+type ChainParams struct {
+	Operation   ChainOperationParams   `json:"operation"`
+	Transaction ChainTransactionParams `json:"transaction"`
+}
+
 type Chain struct {
-	ID         string     `json:"id"`
-	Chain      int64      `json:"chain"`
-	Head       *Head      `json:"head"`
-	Accountant Accountant `json:"accountant,omitempty"` // For bitcoin, litecoin
-	Sender     string     `json:"sender,omitempty"`     // For evm chains
+	ID         string      `json:"id"`
+	Chain      int64       `json:"chain"`
+	Head       *Head       `json:"head"`
+	Params     ChainParams `json:"params"`
+	Accountant Accountant  `json:"accountant,omitempty"` // For bitcoin, litecoin
+	Sender     string      `json:"sender,omitempty"`     // For evm chains
 }
 
 func ReadChains(ctx context.Context) ([]*Chain, error) {
