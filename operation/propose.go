@@ -2,9 +2,9 @@ package operation
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 
-	"github.com/MixinNetwork/go-safe-sdk/common"
 	"github.com/MixinNetwork/go-safe-sdk/types"
 	"github.com/gofrs/uuid/v5"
 )
@@ -110,8 +110,12 @@ func ProposeTransaction(operationId, publicKey string, typ byte, head, destinati
 		return nil, fmt.Errorf("invalid chain: %d", chain)
 	}
 
+	headID, err := uuid.FromString(head)
+	if err != nil {
+		return nil, fmt.Errorf("invalid head uuid %s", head)
+	}
 	extra := []byte{typ}
-	extra = append(extra, uuid.FromStringOrNil(head).Bytes()...)
+	extra = append(extra, headID.Bytes()...)
 	extra = append(extra, []byte(destination)...)
 	op := &types.Operation{
 		Id:     operationId,
@@ -145,8 +149,12 @@ func ProposeBatchTransaction(operationId, publicKey string, typ byte, head strin
 		return nil, fmt.Errorf("invalid chain: %d", chain)
 	}
 
+	headID, err := uuid.FromString(head)
+	if err != nil {
+		return nil, fmt.Errorf("invalid head uuid %s", head)
+	}
 	extra := []byte{typ}
-	extra = append(extra, uuid.FromStringOrNil(head).Bytes()...)
+	extra = append(extra, headID.Bytes()...)
 	extra = append(extra, hash...)
 	op := &types.Operation{
 		Id:     operationId,
@@ -180,9 +188,17 @@ func ProposeCancelTransaction(operationId, publicKey string, head, destination s
 		return nil, fmt.Errorf("invalid chain: %d", chain)
 	}
 
+	cancelID, err := uuid.FromString(cancelId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid cancel uuid %s", cancelId)
+	}
+	headID, err := uuid.FromString(head)
+	if err != nil {
+		return nil, fmt.Errorf("invalid head uuid %s", head)
+	}
 	extra := []byte{TransactionTypeCancel}
-	extra = append(extra, uuid.Must(uuid.FromString(cancelId)).Bytes()...)
-	extra = append(extra, uuid.FromStringOrNil(head).Bytes()...)
+	extra = append(extra, cancelID.Bytes()...)
+	extra = append(extra, headID.Bytes()...)
 	extra = append(extra, []byte(destination)...)
 	op := &types.Operation{
 		Id:     operationId,
@@ -219,14 +235,26 @@ func ProposeInheritanceTransaction(operationId, publicKey string, typ byte, head
 	extra := []byte{typ}
 	switch typ {
 	case TransactionTypeSetInheritance:
-		extra = append(extra, common.DecodeHexOrPanic(hash)...)
+		hashBytes, err := hex.DecodeString(hash)
+		if err != nil {
+			return nil, fmt.Errorf("invalid inheritance hash %s", hash)
+		}
+		extra = append(extra, hashBytes...)
 		extra = append(extra, binary.BigEndian.AppendUint16(nil, duration)...)
 	case TransactionTypeRemoveInheritance:
-		extra = append(extra, uuid.FromStringOrNil(lockID).Bytes()...)
+		lock, err := uuid.FromString(lockID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid lock uuid %s", lockID)
+		}
+		extra = append(extra, lock.Bytes()...)
 	default:
 		return nil, fmt.Errorf("invalid inheritance tx type: %d", typ)
 	}
-	extra = append(extra, uuid.FromStringOrNil(head).Bytes()...)
+	headID, err := uuid.FromString(head)
+	if err != nil {
+		return nil, fmt.Errorf("invalid head uuid %s", head)
+	}
+	extra = append(extra, headID.Bytes()...)
 	extra = append(extra, []byte(destination)...)
 
 	op := &types.Operation{

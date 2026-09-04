@@ -2,7 +2,6 @@ package ethereum
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -105,8 +104,11 @@ func RPCGetBlockHeight(rpc string) (int64, error) {
 }
 
 func RPCGetBlockHash(rpc string, height int64) (string, error) {
-	h := "0x" + hex.EncodeToString(new(big.Int).SetInt64(height).Bytes())
-	res, err := callEthereumRPCUntilSufficient(rpc, "eth_getBlockByNumber", []any{h})
+	if height < 0 {
+		return "", fmt.Errorf("invalid block height %d", height)
+	}
+	h := fmt.Sprintf("0x%x", height)
+	res, err := callEthereumRPCUntilSufficient(rpc, "eth_getBlockByNumber", []any{h, false})
 	if err != nil {
 		return "", err
 	}
@@ -149,14 +151,7 @@ func RPCGetGasPrice(rpc string) (*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasPrefix(p, "0x") {
-		return nil, fmt.Errorf("invalid hex %s", p)
-	}
-	value, success := new(big.Int).SetString(p, 0)
-	if !success {
-		return nil, fmt.Errorf("invalid hex %s", p)
-	}
-	return value, err
+	return ethereumNumberToBigInt(p)
 }
 
 func RPCGetAddressBalance(rpc, txHash, address string) (*big.Int, error) {
@@ -173,11 +168,7 @@ func RPCGetAddressBalance(rpc, txHash, address string) (*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
-	balance, success := new(big.Int).SetString(b[2:], 16)
-	if !success {
-		return nil, fmt.Errorf("Failed to parse address balance")
-	}
-	return balance, err
+	return ethereumNumberToBigInt(b)
 }
 
 func RPCGetTransactionByHash(rpc, hash string) (*RPCTransaction, error) {
@@ -237,11 +228,7 @@ func RPCGetAddressBalanceAtBlock(rpc, blockHash, address string) (*big.Int, erro
 	if err != nil {
 		return nil, err
 	}
-	balance, success := new(big.Int).SetString(b[2:], 16)
-	if !success {
-		return nil, fmt.Errorf("Failed to parse address balance")
-	}
-	return balance, err
+	return ethereumNumberToBigInt(b)
 }
 
 func callEthereumRPCUntilSufficient(rpc, method string, params []any) ([]byte, error) {
@@ -324,4 +311,15 @@ func ethereumNumberToUint64(hex string) (uint64, error) {
 		return 0, fmt.Errorf("invalid uint64 %s", hex)
 	}
 	return value.Uint64(), nil
+}
+
+func ethereumNumberToBigInt(number string) (*big.Int, error) {
+	if !strings.HasPrefix(number, "0x") || len(number) <= 2 {
+		return nil, fmt.Errorf("invalid hex %s", number)
+	}
+	value, success := new(big.Int).SetString(number[2:], 16)
+	if !success {
+		return nil, fmt.Errorf("invalid hex %s", number)
+	}
+	return value, nil
 }

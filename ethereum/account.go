@@ -91,7 +91,10 @@ func VerifyMessageSignature(public string, msg, sig []byte) error {
 func VerifyHashSignature(public string, hash, sig []byte) error {
 	pub, err := hex.DecodeString(public)
 	if err != nil {
-		panic(public)
+		return err
+	}
+	if len(sig) < 64 {
+		return fmt.Errorf("invalid signature length %d", len(sig))
 	}
 	signed := crypto.VerifySignature(pub, hash, sig[:64])
 	if signed {
@@ -116,8 +119,14 @@ func ParseEthereumCompressedPublicKey(public string) (*common.Address, error) {
 }
 
 func ParseEthereumUncompressedPublicKey(public string) (*common.Address, error) {
-	xPub, _ := hdkeychain.NewKeyFromString(public)
-	ecPub, _ := xPub.ECPubKey()
+	xPub, err := hdkeychain.NewKeyFromString(public)
+	if err != nil {
+		return nil, err
+	}
+	ecPub, err := xPub.ECPubKey()
+	if err != nil {
+		return nil, err
+	}
 	pub := ecPub.SerializeCompressed()
 
 	publicKey, err := crypto.DecompressPubkey(pub)

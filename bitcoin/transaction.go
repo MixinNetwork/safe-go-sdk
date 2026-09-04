@@ -354,8 +354,14 @@ func MarshalWiredTransaction(msgTx *wire.MsgTx, encoding wire.MessageEncoding, c
 }
 
 func CheckTransactionPartiallySignedBy(raw, public string) bool {
-	b, _ := hex.DecodeString(raw)
-	psbt, _ := UnmarshalPartiallySignedTransaction(b)
+	b, err := hex.DecodeString(raw)
+	if err != nil {
+		return false
+	}
+	psbt, err := UnmarshalPartiallySignedTransaction(b)
+	if err != nil {
+		return false
+	}
 
 	for i := range psbt.Inputs {
 		pin := psbt.Inputs[i]

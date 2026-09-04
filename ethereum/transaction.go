@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/hex"
@@ -218,6 +219,9 @@ func UnmarshalSafeTransaction(b []byte) (*SafeTransaction, error) {
 		return nil, err
 	}
 	sigsStr := strings.Split(string(signature), ",")
+	if len(sigsStr) > 3 {
+		return nil, fmt.Errorf("invalid signature count %d", len(sigsStr))
+	}
 
 	signatures := make([][]byte, 3)
 	for i, s := range sigsStr {
@@ -292,11 +296,18 @@ func (tx *SafeTransaction) ParseMultiSendData() ([]*Output, error) {
 	if tx.Operation != operationTypeDelegateCall {
 		return nil, fmt.Errorf("invalid tx operation: %d", tx.Operation)
 	}
-	abi, err := ga.JSON(strings.NewReader(abi.MultiSendMetaData.ABI))
+	if len(tx.Data) < 4 {
+		return nil, fmt.Errorf("invalid multi-send data length: %d", len(tx.Data))
+	}
+	multiSendABI, err := ga.JSON(strings.NewReader(abi.MultiSendMetaData.ABI))
 	if err != nil {
 		panic(err)
 	}
-	args, err := abi.Methods["multiSend"].Inputs.Unpack(
+	method := multiSendABI.Methods["multiSend"]
+	if !bytes.Equal(tx.Data[:4], method.ID) {
+		return nil, fmt.Errorf("invalid multi-send method: %x", tx.Data[:4])
+	}
+	args, err := method.Inputs.Unpack(
 		tx.Data[4:],
 	)
 	if err != nil || len(args) != 1 {
@@ -310,6 +321,10 @@ func (tx *SafeTransaction) ParseMultiSendData() ([]*Output, error) {
 		if offset == len(multiSendData) {
 			break
 		}
+		const metaHeaderLength = 1 + 20 + 32 + 32
+		if len(multiSendData)-offset < metaHeaderLength {
+			return nil, fmt.Errorf("invalid meta transaction length: %d", len(multiSendData)-offset)
+		}
 
 		offset += 1
 		bytesTo := multiSendData[offset : offset+20]
@@ -319,8 +334,17 @@ func (tx *SafeTransaction) ParseMultiSendData() ([]*Output, error) {
 		amount := new(big.Int).SetBytes(bytesAmount)
 		offset += 32
 		bytesLen := multiSendData[offset : offset+32]
-		dataLen := new(big.Int).SetBytes(bytesLen).Uint64()
+		dataLenValue := new(big.Int).SetBytes(bytesLen)
+		if !dataLenValue.IsUint64() {
+			return nil, fmt.Errorf("invalid meta transaction data length: %x", bytesLen)
+		}
+		dataLen := dataLenValue.Uint64()
 		offset += 32
+		if dataLen > uint64(len(multiSendData)-offset) {
+			return nil, fmt.Errorf("invalid meta transaction data length: %d", dataLen)
+		}
+		metaData := multiSendData[offset : offset+int(dataLen)]
+		offset += int(dataLen)
 
 		o := &Output{
 			Destination: to.Hex(),
@@ -330,24 +354,19 @@ func (tx *SafeTransaction) ParseMultiSendData() ([]*Output, error) {
 		case dataLen == 0:
 			o.TokenAddress = EthereumEmptyAddress
 		case int(dataLen) == 68:
-			metaData := multiSendData[offset : offset+int(dataLen)]
 			strData := hex.EncodeToString(metaData)
 			method := strData[0:8]
 			switch method {
 			case "59335aa2": // guardSafe
-				offset += int(dataLen)
 			case "a9059cbb": // erc20 transfer
 				bytesTo := metaData[4:36]
 				bytesAmount := metaData[36:68]
 				o.TokenAddress = o.Destination
 				o.Destination = common.BytesToAddress(bytesTo).Hex()
 				o.Amount = new(big.Int).SetBytes(bytesAmount)
-				offset += int(dataLen)
 			default:
 				return nil, fmt.Errorf("invalid meta tx data: %x", metaData)
 			}
-		default:
-			offset += int(dataLen)
 		}
 		os = append(os, o)
 	}
@@ -493,8 +512,14 @@ func ProcessSignature(signature []byte) []byte {
 }
 
 func CheckTransactionPartiallySignedBy(raw, public string) bool {
-	b, _ := hex.DecodeString(raw)
-	st, _ := UnmarshalSafeTransaction(b)
+	b, err := hex.DecodeString(raw)
+	if err != nil {
+		return false
+	}
+	st, err := UnmarshalSafeTransaction(b)
+	if err != nil {
+		return false
+	}
 
 	for _, sig := range st.Signatures {
 		if sig != nil {

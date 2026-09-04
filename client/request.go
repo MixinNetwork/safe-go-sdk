@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 )
@@ -27,7 +27,7 @@ func SetBaseUri(base string) {
 }
 
 func Request(ctx context.Context, method, path string, body []byte) ([]byte, error) {
-	req, err := http.NewRequest(method, httpUri+path, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, method, httpUri+path, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -41,5 +41,5 @@ func Request(ctx context.Context, method, path string, body []byte) ([]byte, err
 	if resp.StatusCode >= 500 {
 		return nil, fmt.Errorf("response status code %d", resp.StatusCode)
 	}
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }

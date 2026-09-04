@@ -65,10 +65,13 @@ func RPCGetTransactionOutput(chain byte, rpc, hash string, index int64) (*RPCTra
 	if err != nil {
 		return nil, nil, err
 	}
-	if int64(len(tx.Vout)) <= index {
+	if index < 0 || int64(len(tx.Vout)) <= index {
 		return nil, nil, nil
 	}
 	out := tx.Vout[index]
+	if out == nil || out.ScriptPubKey == nil {
+		return nil, nil, nil
+	}
 	skt := out.ScriptPubKey.Type
 	if skt != ScriptPubKeyTypeWitnessScriptHash && skt != ScriptPubKeyTypeWitnessKeyHash {
 		return nil, nil, nil
@@ -84,7 +87,7 @@ func RPCGetTransactionOutput(chain byte, rpc, hash string, index int64) (*RPCTra
 	output := &Output{
 		Address:  out.ScriptPubKey.Address,
 		Satoshi:  satoshi.IntPart(),
-		Coinbase: len(tx.Vin) == 0 && tx.Vin[0].Coinbase != "",
+		Coinbase: len(tx.Vin) > 0 && tx.Vin[0].Coinbase != "",
 	}
 
 	if tx.BlockHash == "" { // mempool
