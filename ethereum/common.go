@@ -51,6 +51,8 @@ const (
 	safeTxTypehash          = "0xbb8310d486368db6bd6f849402fdd73ad53d316b5a4b2644ad6efe0f941286d8"
 	domainSeparatorTypehash = "0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218"
 	guardStorageSlot        = "0x4a204f620c8c5ccdca3fd54d003badd85ba500436a431f0cbda4f558c93c34c8"
+	functionERC20Transfer   = "a9059cbb"
+	functionMultiSend       = "8d80ff0a"
 )
 
 type Asset struct {

@@ -33,9 +33,10 @@ func TestCreateNativeAndERC20Transactions(t *testing.T) {
 	assert.Equal(t, native.GetTransactionHash(), native.Message)
 	assert.Equal(t, native.Hash("operation-id"), native.TxHash)
 
-	outputs := native.ExtractOutputs()
+	outputs, err := native.ExtractOutputs()
+	require.NoError(t, err)
 	require.Len(t, outputs, 1)
-	assert.Empty(t, outputs[0].TokenAddress)
+	assert.Equal(t, EthereumEmptyAddress, outputs[0].TokenAddress)
 	assert.Equal(t, testDestination, outputs[0].Destination)
 	assert.Equal(t, big.NewInt(12345), outputs[0].Amount)
 
@@ -56,7 +57,8 @@ func TestCreateNativeAndERC20Transactions(t *testing.T) {
 	require.Len(t, erc20.Data, 68)
 	assert.Equal(t, "a9059cbb", hex.EncodeToString(erc20.Data[:4]))
 
-	outputs = erc20.ExtractOutputs()
+	outputs, err = erc20.ExtractOutputs()
+	require.NoError(t, err)
 	require.Len(t, outputs, 1)
 	assert.Equal(t, testToken, outputs[0].TokenAddress)
 	assert.Equal(t, testDestination, outputs[0].Destination)
@@ -118,7 +120,9 @@ func TestMultiSendTransactionRoundTrip(t *testing.T) {
 	assert.Equal(t, testToken, parsed[1].TokenAddress)
 	assert.Equal(t, testSafeAddress, parsed[1].Destination)
 	assert.Equal(t, big.NewInt(200), parsed[1].Amount)
-	assert.Equal(t, parsed, tx.ExtractOutputs())
+	extracted, err := tx.ExtractOutputs()
+	require.NoError(t, err)
+	assert.Equal(t, parsed, extracted)
 
 	raw := tx.Marshal()
 	roundTrip, err := UnmarshalSafeTransaction(raw)
@@ -134,11 +138,11 @@ func TestMultiSendTransactionRoundTrip(t *testing.T) {
 	assert.Equal(t, tx.Signatures, roundTrip.Signatures)
 
 	_, err = (&SafeTransaction{Operation: operationTypeCall}).ParseMultiSendData()
-	assert.ErrorContains(t, err, "invalid tx operation")
-	_, err = (&SafeTransaction{Operation: operationTypeDelegateCall, Data: []byte{0, 0, 0, 0}}).ParseMultiSendData()
+	assert.ErrorContains(t, err, "invalid MultiSend operation")
+	_, err = (&SafeTransaction{Operation: operationTypeDelegateCall, Destination: ethcommon.HexToAddress(EthereumMultiSendAddress), Value: big.NewInt(0), Data: []byte{0, 0, 0, 0}}).ParseMultiSendData()
 	assert.Error(t, err)
-	_, err = (&SafeTransaction{Operation: operationTypeDelegateCall, Data: []byte{1, 2, 3}}).ParseMultiSendData()
-	assert.ErrorContains(t, err, "invalid multi-send data length")
+	_, err = (&SafeTransaction{Operation: operationTypeDelegateCall, Destination: ethcommon.HexToAddress(EthereumMultiSendAddress), Value: big.NewInt(0), Data: []byte{1, 2, 3}}).ParseMultiSendData()
+	assert.ErrorContains(t, err, "truncated MultiSend data")
 
 	multiSendABI, err := ga.JSON(strings.NewReader(contractabi.MultiSendMetaData.ABI))
 	require.NoError(t, err)
@@ -148,9 +152,34 @@ func TestMultiSendTransactionRoundTrip(t *testing.T) {
 	} {
 		data, packErr := multiSendABI.Pack("multiSend", malformed)
 		require.NoError(t, packErr)
-		_, err = (&SafeTransaction{Operation: operationTypeDelegateCall, Data: data}).ParseMultiSendData()
+		_, err = (&SafeTransaction{Operation: operationTypeDelegateCall, Destination: ethcommon.HexToAddress(EthereumMultiSendAddress), Value: big.NewInt(0), Data: data}).ParseMultiSendData()
 		assert.Error(t, err)
 	}
+
+	wrongTarget := *tx
+	wrongTarget.Destination = ethcommon.HexToAddress(testDestination)
+	_, err = wrongTarget.ParseMultiSendData()
+	assert.ErrorContains(t, err, "invalid MultiSend destination")
+
+	wrongValue := *tx
+	wrongValue.Value = big.NewInt(1)
+	_, err = wrongValue.ParseMultiSendData()
+	assert.ErrorContains(t, err, "invalid MultiSend value")
+
+	mutated := append([]byte(nil), tx.Data...)
+	mutated[68] = operationTypeDelegateCall
+	_, err = (&SafeTransaction{Operation: operationTypeDelegateCall, Destination: ethcommon.HexToAddress(EthereumMultiSendAddress), Value: big.NewInt(0), Data: mutated}).ParseMultiSendData()
+	assert.ErrorContains(t, err, "invalid MultiSend inner operation")
+
+	unknownData := []byte{operationTypeCall}
+	unknownData = append(unknownData, ethcommon.HexToAddress(testDestination).Bytes()...)
+	unknownData = append(unknownData, ethcommon.LeftPadBytes(big.NewInt(0).Bytes(), 32)...)
+	unknownData = append(unknownData, ethcommon.LeftPadBytes(big.NewInt(1).Bytes(), 32)...)
+	unknownData = append(unknownData, 0xff)
+	data, err := multiSendABI.Pack("multiSend", unknownData)
+	require.NoError(t, err)
+	_, err = (&SafeTransaction{Operation: operationTypeDelegateCall, Destination: ethcommon.HexToAddress(EthereumMultiSendAddress), Value: big.NewInt(0), Data: data}).ExtractOutputs()
+	assert.ErrorContains(t, err, "invalid MultiSend inner data size")
 }
 
 func TestEnableGuardTransaction(t *testing.T) {
@@ -163,11 +192,10 @@ func TestEnableGuardTransaction(t *testing.T) {
 	assert.Equal(t, ethcommon.HexToAddress(EthereumMultiSendAddress), tx.Destination)
 	assert.NotEmpty(t, tx.Data)
 
-	outputs, err := tx.ParseMultiSendData()
+	_, err = tx.ParseMultiSendData()
+	assert.Error(t, err)
+	_, err = SignTx(hex.EncodeToString(tx.Marshal()), testPrivateKey)
 	require.NoError(t, err)
-	require.Len(t, outputs, 2)
-	assert.Equal(t, testSafeAddress, outputs[0].Destination)
-	assert.Equal(t, ethcommon.HexToAddress(EthereumSafeGuardAddress).Hex(), outputs[1].Destination)
 }
 
 func TestTransactionDataEncoding(t *testing.T) {
@@ -205,9 +233,9 @@ func TestMarshalAndUnmarshalErrors(t *testing.T) {
 	_, err = UnmarshalSafeTransaction(tx.Marshal())
 	assert.EqualError(t, err, "invalid signature count 4")
 
-	assert.PanicsWithValue(t, "invalid safe transaction data", func() {
-		(&SafeTransaction{Operation: operationTypeCall, Data: []byte{0, 0, 0, 0}}).ExtractOutputs()
-	})
+	outputs, err := (&SafeTransaction{Operation: operationTypeCall, Destination: ethcommon.HexToAddress(testDestination), Value: big.NewInt(0), Data: []byte{0, 0, 0, 0}}).ExtractOutputs()
+	assert.Error(t, err)
+	assert.Empty(t, outputs)
 }
 
 func TestSignAndVerifyTransaction(t *testing.T) {
@@ -256,4 +284,24 @@ func TestSignAndVerifyTransaction(t *testing.T) {
 
 	processed := ProcessSignature(append(bytes.Repeat([]byte{0}, 64), 1))
 	assert.Equal(t, byte(32), processed[64])
+}
+
+func TestRejectsMismatchedSerializedMessage(t *testing.T) {
+	tx, err := CreateTransaction(
+		context.Background(), TypeETHTx, 1, "id", testSafeAddress,
+		testDestination, "", "1", big.NewInt(1),
+	)
+	require.NoError(t, err)
+	tx.Message = bytes.Repeat([]byte{0xab}, 32)
+	rawHex := hex.EncodeToString(tx.Marshal())
+
+	_, err = UnmarshalSafeTransaction(tx.Marshal())
+	assert.ErrorContains(t, err, "message does not match transaction hash")
+	_, err = SignTx(rawHex, testPrivateKey)
+	assert.ErrorContains(t, err, "message does not match transaction hash")
+
+	private, err := crypto.HexToECDSA(testPrivateKey)
+	require.NoError(t, err)
+	public := hex.EncodeToString(crypto.CompressPubkey(&private.PublicKey))
+	assert.False(t, CheckTransactionPartiallySignedBy(rawHex, public))
 }

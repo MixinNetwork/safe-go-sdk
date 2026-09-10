@@ -3,6 +3,7 @@ package ethereum
 import (
 	"bytes"
 	"context"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
@@ -235,7 +236,7 @@ func UnmarshalSafeTransaction(b []byte) (*SafeTransaction, error) {
 		signatures[i] = sig
 	}
 
-	return &SafeTransaction{
+	tx := &SafeTransaction{
 		TxHash:         string(hash),
 		ChainID:        int64(chainID),
 		SafeAddress:    string(safeAddress),
@@ -251,33 +252,70 @@ func UnmarshalSafeTransaction(b []byte) (*SafeTransaction, error) {
 		Nonce:          new(big.Int).SetBytes(nonce),
 		Message:        msg,
 		Signatures:     signatures,
-	}, nil
+	}
+	if len(tx.Message) != 32 {
+		return nil, fmt.Errorf("invalid safe transaction message length: %d", len(tx.Message))
+	}
+	if subtle.ConstantTimeCompare(tx.Message, tx.GetTransactionHash()) != 1 {
+		return nil, fmt.Errorf("safe transaction message does not match transaction hash")
+	}
+	return tx, nil
 }
 
-func (tx *SafeTransaction) ExtractOutputs() []*Output {
-	outputs, err := tx.ParseMultiSendData()
-	if err == nil {
-		return outputs
+func (tx *SafeTransaction) ExtractOutputs() ([]*Output, error) {
+	if tx == nil || tx.Value == nil {
+		return nil, fmt.Errorf("invalid nil safe transaction value")
 	}
-	switch {
-	case len(tx.Data) == 0:
-		return []*Output{{
-			Destination: tx.Destination.Hex(),
-			Amount:      tx.Value,
-		}}
+	switch tx.Operation {
+	case operationTypeDelegateCall:
+		return tx.ParseMultiSendData()
+	case operationTypeCall:
 	default:
-		method := hex.EncodeToString(tx.Data[0:4])
-		if method != "a9059cbb" || len(tx.Data) != 68 {
-			panic("invalid safe transaction data")
-		}
-		destination := tx.Data[4:36]
-		value := tx.Data[36:68]
-		return []*Output{{
-			TokenAddress: tx.Destination.Hex(),
-			Destination:  common.BytesToAddress(destination).Hex(),
-			Amount:       new(big.Int).SetBytes(value),
-		}}
+		return nil, fmt.Errorf("invalid safe transaction operation: %d", tx.Operation)
 	}
+
+	if tx.Destination == (common.Address{}) {
+		return nil, fmt.Errorf("invalid safe transaction destination")
+	}
+	if len(tx.Data) == 0 {
+		if tx.Value.Sign() <= 0 {
+			return nil, fmt.Errorf("invalid native transfer amount: %s", tx.Value)
+		}
+		return []*Output{{
+			TokenAddress: EthereumEmptyAddress,
+			Destination:  tx.Destination.Hex(),
+			Amount:       new(big.Int).Set(tx.Value),
+		}}, nil
+	}
+	if tx.Value.Sign() != 0 {
+		return nil, fmt.Errorf("invalid ERC20 transaction value: %s", tx.Value)
+	}
+	return parseERC20Output(tx.Destination, tx.Data)
+}
+
+func parseERC20Output(token common.Address, data []byte) ([]*Output, error) {
+	if token == (common.Address{}) {
+		return nil, fmt.Errorf("invalid ERC20 token address")
+	}
+	if len(data) != 68 || hex.EncodeToString(data[:4]) != functionERC20Transfer {
+		return nil, fmt.Errorf("invalid ERC20 transfer data: %d", len(data))
+	}
+	if !bytes.Equal(data[4:16], make([]byte, 12)) {
+		return nil, fmt.Errorf("non-canonical ERC20 transfer destination")
+	}
+	destination := common.BytesToAddress(data[16:36])
+	if destination == (common.Address{}) {
+		return nil, fmt.Errorf("invalid ERC20 transfer destination")
+	}
+	amount := new(big.Int).SetBytes(data[36:68])
+	if amount.Sign() <= 0 {
+		return nil, fmt.Errorf("invalid ERC20 transfer amount: %s", amount)
+	}
+	return []*Output{{
+		TokenAddress: token.Hex(),
+		Destination:  destination.Hex(),
+		Amount:       amount,
+	}}, nil
 }
 
 func (tx *SafeTransaction) GetTransactionHash() []byte {
@@ -294,83 +332,112 @@ func (tx *SafeTransaction) GetTransactionHash() []byte {
 
 func (tx *SafeTransaction) ParseMultiSendData() ([]*Output, error) {
 	if tx.Operation != operationTypeDelegateCall {
-		return nil, fmt.Errorf("invalid tx operation: %d", tx.Operation)
+		return nil, fmt.Errorf("invalid MultiSend operation: %d", tx.Operation)
 	}
-	if len(tx.Data) < 4 {
-		return nil, fmt.Errorf("invalid multi-send data length: %d", len(tx.Data))
+	if tx.Destination != common.HexToAddress(EthereumMultiSendAddress) {
+		return nil, fmt.Errorf("invalid MultiSend destination: %s", tx.Destination.Hex())
 	}
-	multiSendABI, err := ga.JSON(strings.NewReader(abi.MultiSendMetaData.ABI))
+	if tx.Value == nil || tx.Value.Sign() != 0 {
+		return nil, fmt.Errorf("invalid MultiSend value: %v", tx.Value)
+	}
+	multiSendData, err := unpackMultiSendData(tx.Data)
 	if err != nil {
-		panic(err)
-	}
-	method := multiSendABI.Methods["multiSend"]
-	if !bytes.Equal(tx.Data[:4], method.ID) {
-		return nil, fmt.Errorf("invalid multi-send method: %x", tx.Data[:4])
-	}
-	args, err := method.Inputs.Unpack(
-		tx.Data[4:],
-	)
-	if err != nil || len(args) != 1 {
 		return nil, err
 	}
-	multiSendData := args[0].([]byte)
 
 	var os []*Output
-	offset := 0
-	for {
-		if offset == len(multiSendData) {
-			break
-		}
-		const metaHeaderLength = 1 + 20 + 32 + 32
+	for offset := 0; offset < len(multiSendData); {
+		const metaHeaderLength = 1 + common.AddressLength + 32 + 32
 		if len(multiSendData)-offset < metaHeaderLength {
-			return nil, fmt.Errorf("invalid meta transaction length: %d", len(multiSendData)-offset)
+			return nil, fmt.Errorf("truncated MultiSend entry at %d", offset)
 		}
 
-		offset += 1
-		bytesTo := multiSendData[offset : offset+20]
-		to := common.BytesToAddress(bytesTo)
-		offset += 20
-		bytesAmount := multiSendData[offset : offset+32]
-		amount := new(big.Int).SetBytes(bytesAmount)
-		offset += 32
-		bytesLen := multiSendData[offset : offset+32]
-		dataLenValue := new(big.Int).SetBytes(bytesLen)
-		if !dataLenValue.IsUint64() {
-			return nil, fmt.Errorf("invalid meta transaction data length: %x", bytesLen)
+		operation := multiSendData[offset]
+		offset++
+		if operation != operationTypeCall {
+			return nil, fmt.Errorf("invalid MultiSend inner operation at %d: %d", offset-1, operation)
 		}
-		dataLen := dataLenValue.Uint64()
-		offset += 32
-		if dataLen > uint64(len(multiSendData)-offset) {
-			return nil, fmt.Errorf("invalid meta transaction data length: %d", dataLen)
-		}
-		metaData := multiSendData[offset : offset+int(dataLen)]
-		offset += int(dataLen)
 
-		o := &Output{
-			Destination: to.Hex(),
-			Amount:      amount,
+		to := common.BytesToAddress(multiSendData[offset : offset+common.AddressLength])
+		offset += common.AddressLength
+		if to == (common.Address{}) {
+			return nil, fmt.Errorf("invalid MultiSend inner destination")
 		}
-		switch {
-		case dataLen == 0:
-			o.TokenAddress = EthereumEmptyAddress
-		case int(dataLen) == 68:
-			strData := hex.EncodeToString(metaData)
-			method := strData[0:8]
-			switch method {
-			case "59335aa2": // guardSafe
-			case "a9059cbb": // erc20 transfer
-				bytesTo := metaData[4:36]
-				bytesAmount := metaData[36:68]
-				o.TokenAddress = o.Destination
-				o.Destination = common.BytesToAddress(bytesTo).Hex()
-				o.Amount = new(big.Int).SetBytes(bytesAmount)
-			default:
-				return nil, fmt.Errorf("invalid meta tx data: %x", metaData)
+		amount := new(big.Int).SetBytes(multiSendData[offset : offset+32])
+		offset += 32
+		dataLengthWord := multiSendData[offset : offset+32]
+		offset += 32
+		dataLength, err := boundedABIUint(dataLengthWord, len(multiSendData)-offset)
+		if err != nil {
+			return nil, fmt.Errorf("invalid MultiSend inner data length: %w", err)
+		}
+		data := multiSendData[offset : offset+dataLength]
+		offset += dataLength
+
+		switch dataLength {
+		case 0:
+			if amount.Sign() <= 0 {
+				return nil, fmt.Errorf("invalid MultiSend native amount: %s", amount)
 			}
+			os = append(os, &Output{
+				TokenAddress: EthereumEmptyAddress,
+				Destination:  to.Hex(),
+				Amount:       amount,
+			})
+		case 68:
+			if amount.Sign() != 0 {
+				return nil, fmt.Errorf("invalid MultiSend ERC20 value: %s", amount)
+			}
+			tokenOutputs, err := parseERC20Output(to, data)
+			if err != nil {
+				return nil, err
+			}
+			os = append(os, tokenOutputs[0])
+		default:
+			return nil, fmt.Errorf("invalid MultiSend inner data size: %d", dataLength)
 		}
-		os = append(os, o)
+	}
+	if len(os) == 0 {
+		return nil, fmt.Errorf("empty MultiSend transaction")
 	}
 	return os, nil
+}
+
+func unpackMultiSendData(data []byte) ([]byte, error) {
+	if len(data) < 68 {
+		return nil, fmt.Errorf("truncated MultiSend data: %d", len(data))
+	}
+	if hex.EncodeToString(data[:4]) != functionMultiSend {
+		return nil, fmt.Errorf("invalid MultiSend selector: %x", data[:4])
+	}
+	if new(big.Int).SetBytes(data[4:36]).Cmp(big.NewInt(32)) != 0 {
+		return nil, fmt.Errorf("invalid MultiSend ABI offset")
+	}
+	dataLength, err := boundedABIUint(data[36:68], len(data)-68)
+	if err != nil {
+		return nil, fmt.Errorf("invalid MultiSend ABI length: %w", err)
+	}
+	paddedLength := (dataLength + 31) / 32 * 32
+	if paddedLength > len(data)-68 || len(data) != 68+paddedLength {
+		return nil, fmt.Errorf("invalid MultiSend padded length: %d", len(data))
+	}
+	for _, padding := range data[68+dataLength:] {
+		if padding != 0 {
+			return nil, fmt.Errorf("invalid MultiSend ABI padding")
+		}
+	}
+	return data[68 : 68+dataLength], nil
+}
+
+func boundedABIUint(word []byte, maximum int) (int, error) {
+	if len(word) != 32 {
+		return 0, fmt.Errorf("invalid ABI word length: %d", len(word))
+	}
+	value := new(big.Int).SetBytes(word)
+	if !value.IsUint64() || value.Uint64() > uint64(maximum) {
+		return 0, fmt.Errorf("ABI value out of bounds: %s", value)
+	}
+	return int(value.Uint64()), nil
 }
 
 func (tx *SafeTransaction) GetEnableGuradData(observer string, timelock *big.Int) []byte {
