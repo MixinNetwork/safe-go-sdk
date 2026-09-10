@@ -117,6 +117,12 @@ func RPCGetBlockHash(rpc string, height int64) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if b == nil {
+		return "", fmt.Errorf("ethereum block %d not found", height)
+	}
+	if b.Hash == "" {
+		return "", fmt.Errorf("empty ethereum block hash at height %d", height)
+	}
 	return b.Hash, err
 }
 

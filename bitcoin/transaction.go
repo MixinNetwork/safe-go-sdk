@@ -332,8 +332,23 @@ func UnmarshalPartiallySignedTransaction(b []byte) (*PartiallySignedTransaction,
 }
 
 func (psbt *PartiallySignedTransaction) SigHash(idx int) ([]byte, error) {
+	if psbt == nil || psbt.Packet == nil {
+		return nil, fmt.Errorf("invalid nil partially signed transaction")
+	}
 	tx := psbt.UnsignedTx
+	if tx == nil {
+		return nil, fmt.Errorf("invalid nil unsigned transaction")
+	}
+	if idx < 0 || idx >= len(psbt.Inputs) || idx >= len(tx.TxIn) {
+		return nil, fmt.Errorf("invalid input index %d", idx)
+	}
 	pin := psbt.Inputs[idx]
+	if pin.WitnessUtxo == nil {
+		return nil, fmt.Errorf("missing witness utxo for input %d", idx)
+	}
+	if len(pin.WitnessScript) == 0 {
+		return nil, fmt.Errorf("missing witness script for input %d", idx)
+	}
 	satoshi := pin.WitnessUtxo.Value
 	pof := txscript.NewCannedPrevOutputFetcher(pin.WitnessScript, satoshi)
 	tsh := txscript.NewTxSigHashes(tx, pof)
