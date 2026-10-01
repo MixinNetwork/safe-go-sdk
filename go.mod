@@ -3,7 +3,7 @@ module github.com/MixinNetwork/go-safe-sdk
 go 1.27.1
 
 require (
-	github.com/MixinNetwork/mixin v0.19.7
+	github.com/MixinNetwork/mixin v0.19.9
 	github.com/btcsuite/btcd v0.26.2
 	github.com/btcsuite/btcd/address/v2 v2.0.0
 	github.com/btcsuite/btcd/btcec/v2 v2.5.0
