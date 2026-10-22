@@ -1,6 +1,6 @@
 module github.com/MixinNetwork/go-safe-sdk
 
-go 1.27.1
+go 1.27.3
 
 require (
 	github.com/MixinNetwork/mixin v0.19.9
