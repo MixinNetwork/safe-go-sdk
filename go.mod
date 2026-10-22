@@ -15,7 +15,7 @@ require (
 	github.com/btcsuite/btcd/wire/v2 v2.0.1
 	github.com/ethereum/go-ethereum v1.17.8
 	github.com/gofrs/uuid/v5 v5.5.1
-	github.com/shopspring/decimal v1.5.0
+	github.com/shopspring/decimal v1.6.0
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/crypto v0.58.0
 )
