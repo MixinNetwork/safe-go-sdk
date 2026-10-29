@@ -32,8 +32,8 @@ github.com/btcsuite/btcd/chaincfg/v2 v2.0.0 h1:M/RTtXfXA9odC1RUEOyZFXj/NXKVHPYZX
 github.com/btcsuite/btcd/chaincfg/v2 v2.0.0/go.mod h1:rHgHIXYYfn70m25a+BJ9f9z7VZAsTiDQGB2XYaippGQ=
 github.com/btcsuite/btcd/chainhash/v2 v2.0.0 h1:PMLlSloHJuEeB80XG9EjpXWNEKAZAMLl6YHZ6YsEuoA=
 github.com/btcsuite/btcd/chainhash/v2 v2.0.0/go.mod h1:mKxcZ7oGTXE7IRV+sS9hP4EVBwc/SzfNR+52IsOP9j8=
-github.com/btcsuite/btcd/psbt/v2 v2.0.0 h1:vKBfHGkxsplVExwCozfK9VuioZ6D6cRpAhcMia2kgrQ=
-github.com/btcsuite/btcd/psbt/v2 v2.0.0/go.mod h1:WdHfpXJDXklnMU8u22YXz8o12q8hPYr4b8CxpKdjGYs=
+github.com/btcsuite/btcd/psbt/v2 v2.0.1 h1:4blJToAqtpIm8wPUD21tnqo4qqiRTmcb7lub3mZlxa4=
+github.com/btcsuite/btcd/psbt/v2 v2.0.1/go.mod h1:O7URUVrhi6aC5+Qhl0vhtqo2KdltG+vRv44ecPlan+E=
 github.com/btcsuite/btcd/txscript/v2 v2.0.0 h1:pEmmHaC8eRx6KSB63zSVJD7qrit9/c9cLSrw++XrYP8=
 github.com/btcsuite/btcd/txscript/v2 v2.0.0/go.mod h1:pZXabc11Xr9nz/18kXY3yErdAajYc3gi28Zqb3KqlFo=
 github.com/btcsuite/btcd/wire/v2 v2.0.1 h1:edmb35tvRyQpFp331L9PwZFccaTCOQwevSsU6ra4BR4=
