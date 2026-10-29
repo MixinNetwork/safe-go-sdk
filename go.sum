@@ -26,8 +26,8 @@ github.com/btcsuite/btcd/address/v2 v2.0.1 h1:JUZpR5mFTkkOH0qYlp9Z9WEIFTVqvuLv1M
 github.com/btcsuite/btcd/address/v2 v2.0.1/go.mod h1:gTEw79h3lHtpojc7eZCKJRPLYs7HFmVsF6rKMzNVD+g=
 github.com/btcsuite/btcd/btcec/v2 v2.5.0 h1:KioMXOWa76b86sTZZOmbzv/ldaQCmB8KFAyn5PbB8E8=
 github.com/btcsuite/btcd/btcec/v2 v2.5.0/go.mod h1:+K/MYXcLBtHEQjRbjHuJChuybk4LCgjdjgRwil+e+Kk=
-github.com/btcsuite/btcd/btcutil/v2 v2.0.1 h1:ZDz+9GrvetBfvbVv2J93hePAFH5BNjE5Eaz4jMQZSY0=
-github.com/btcsuite/btcd/btcutil/v2 v2.0.1/go.mod h1:W35r9Hm3PUWF09us9CcMhRLtNDj/6f66b004cm3vECU=
+github.com/btcsuite/btcd/btcutil/v2 v2.0.2 h1:qaAnOA79QC2EM6sS9KHk7nED8soF410pQ+yKeOKS/Uc=
+github.com/btcsuite/btcd/btcutil/v2 v2.0.2/go.mod h1:KyhqOCLr2KzxQq1soWXnJ1aoUu/iDtHdy+ZcH9y+L5w=
 github.com/btcsuite/btcd/chaincfg/v2 v2.0.0 h1:M/RTtXfXA9odC1RUEOyZFXj/NXKVHPYZXVjb60xTOok=
 github.com/btcsuite/btcd/chaincfg/v2 v2.0.0/go.mod h1:rHgHIXYYfn70m25a+BJ9f9z7VZAsTiDQGB2XYaippGQ=
 github.com/btcsuite/btcd/chainhash/v2 v2.0.0 h1:PMLlSloHJuEeB80XG9EjpXWNEKAZAMLl6YHZ6YsEuoA=
@@ -150,8 +150,6 @@ github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 h1:W9WBk7
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
 github.com/jackpal/go-nat-pmp v1.0.2 h1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=
 github.com/jackpal/go-nat-pmp v1.0.2/go.mod h1:QPH045xvCAeXUZOxsnwmrtiCoxIr9eob+4orBN1SBKc=
-github.com/kcalvinalvin/anet v0.0.0-20251112173137-d8ddc1f6dbee h1:FPP9HDkBbPyniu+u7FHZg+kKFX1WW0gxOGteJ0h3AJk=
-github.com/kcalvinalvin/anet v0.0.0-20251112173137-d8ddc1f6dbee/go.mod h1:N6sz6HwJAenJ6d+/xmSl0ikfV05ZrVGmjt1ryy/WOtE=
 github.com/kkdai/bstream v1.0.0 h1:Se5gHwgp2VT2uHfDrkbbgbgEvV9cimLELwrPJctSjg8=
 github.com/kkdai/bstream v1.0.0/go.mod h1:FDnDOHt5Yx4p3FaHcioFT0QjDOtgUpvjeZqAs+NVZZA=
 github.com/klauspost/compress v1.20.0 h1:a3C1ke2ohxFymNlb2HWAHjDeKCI90scRskErZkR0ezA=
