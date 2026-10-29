@@ -22,8 +22,8 @@ github.com/bits-and-blooms/bitset v1.25.0 h1:0Ro0qF4abCkM6SqWPVj29sFhAbMPAZpaDD7
 github.com/bits-and-blooms/bitset v1.25.0/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=
 github.com/btcsuite/btcd v0.26.2 h1:hPXzICjUZOsW2JwBLg9nHwGabc/D7pJDlna2vTB/SWI=
 github.com/btcsuite/btcd v0.26.2/go.mod h1:MZvDMHzZLcLyjEF8vzq+fLg/a/VwkvejnLovHmA5YiE=
-github.com/btcsuite/btcd/address/v2 v2.0.0 h1:UVu8Hal6Siu4XastFe+JX5JkeBYONbDUIY5E+SVTs6I=
-github.com/btcsuite/btcd/address/v2 v2.0.0/go.mod h1:htJK1AtaeK3bKNfZY63ep2oN8LbrI6qvmPGe1vekb3I=
+github.com/btcsuite/btcd/address/v2 v2.0.1 h1:JUZpR5mFTkkOH0qYlp9Z9WEIFTVqvuLv1MrzW0JvDzo=
+github.com/btcsuite/btcd/address/v2 v2.0.1/go.mod h1:gTEw79h3lHtpojc7eZCKJRPLYs7HFmVsF6rKMzNVD+g=
 github.com/btcsuite/btcd/btcec/v2 v2.5.0 h1:KioMXOWa76b86sTZZOmbzv/ldaQCmB8KFAyn5PbB8E8=
 github.com/btcsuite/btcd/btcec/v2 v2.5.0/go.mod h1:+K/MYXcLBtHEQjRbjHuJChuybk4LCgjdjgRwil+e+Kk=
 github.com/btcsuite/btcd/btcutil/v2 v2.0.1 h1:ZDz+9GrvetBfvbVv2J93hePAFH5BNjE5Eaz4jMQZSY0=
