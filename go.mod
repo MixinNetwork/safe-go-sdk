@@ -11,7 +11,7 @@ require (
 	github.com/btcsuite/btcd/chaincfg/v2 v2.0.0
 	github.com/btcsuite/btcd/chainhash/v2 v2.0.0
 	github.com/btcsuite/btcd/psbt/v2 v2.0.1
-	github.com/btcsuite/btcd/txscript/v2 v2.0.0
+	github.com/btcsuite/btcd/txscript/v2 v2.0.1
 	github.com/btcsuite/btcd/wire/v2 v2.0.2
 	github.com/ethereum/go-ethereum v1.17.8
 	github.com/gofrs/uuid/v5 v5.5.1
