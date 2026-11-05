@@ -4,7 +4,7 @@ go 1.27.3
 
 require (
 	github.com/MixinNetwork/mixin v0.19.11
-	github.com/btcsuite/btcd v0.26.2
+	github.com/btcsuite/btcd v0.27.0
 	github.com/btcsuite/btcd/address/v2 v2.0.1
 	github.com/btcsuite/btcd/btcec/v2 v2.5.1
 	github.com/btcsuite/btcd/btcutil/v2 v2.0.2
@@ -47,7 +47,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.4.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
-	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/supranational/blst v0.3.17 // indirect
 	github.com/tklauser/go-sysconf v0.4.0 // indirect
 	github.com/tklauser/numcpus v0.12.0 // indirect
