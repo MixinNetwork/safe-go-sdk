@@ -3,7 +3,7 @@ module github.com/MixinNetwork/go-safe-sdk
 go 1.27.3
 
 require (
-	github.com/MixinNetwork/mixin v0.19.9
+	github.com/MixinNetwork/mixin v0.19.11
 	github.com/btcsuite/btcd v0.26.2
 	github.com/btcsuite/btcd/address/v2 v2.0.1
 	github.com/btcsuite/btcd/btcec/v2 v2.5.1
@@ -44,7 +44,7 @@ require (
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/kkdai/bstream v1.0.0 // indirect
-	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
+	github.com/klauspost/cpuid/v2 v2.4.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
